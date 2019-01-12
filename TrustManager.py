@@ -23,42 +23,43 @@ class TrustManager:
         Tref = [0 for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
         n_groups = (ProviderConfig.n_providers+ProviderConfig.n_intermidiaries) / ProviderConfig.n_cluster_size
         Tinit = [1 for g in range(n_groups)]
-        Revenue = [0 for g in range(n_groups)]
+        #Revenue = [0 for g in range(n_groups)]
         fraudsters_behaviour = [[0 for k in range(2)] for i in range(ProviderConfig.n_fraudsters)]
-        #Revenue = [0 for g in range(ProviderConfig.n_intermidiaries+ProviderConfig.n_providers)]
-        frauds = 0
+        Revenue = [0 for g in range(ProviderConfig.n_intermidiaries+ProviderConfig.n_providers)]
         M = [[[0 for k in range(2)] for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+        
+       
         with open(TraceConfig.file_path) as f:
             data = json.load(f)
         traces = data["traces"]
 
-
-
         for trace in traces:
-
-            if trace["fraud"]==0:
+            #print("participating_providers"+str(participating_providers))
+            if trace["fraud"]==0 and trace["termin"] in range(ProviderConfig.n_providers/2-ProviderConfig.provider_participation/2, ProviderConfig.n_providers/2 + ProviderConfig.provider_participation/2):
+                #print("+")
                 origin = trace["origin"]
                 nextop = trace["transit"][0]["id"]
                 M[origin][nextop][0] = M[origin][nextop][0] + 1
                 for i in range(len(trace["transit"])-1):
                     source = trace["transit"][i]["id"]
                     target = trace["transit"][i+1]["id"]
-                    M[source][target][0] = M[source][target][0] + 1
-                    Ref[source][target] = Ref[source][target] +1
+                    if source in range(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.intermidiaries_participation):
+                        M[source][target][0] = M[source][target][0] + 1
+                        Ref[source][target] = Ref[source][target] +1
 
-            else:
+            if trace["fraud"]==1 and trace["termin"] in range(ProviderConfig.n_providers/2-ProviderConfig.provider_participation/2, ProviderConfig.n_providers/2 + ProviderConfig.provider_participation/2):
                 origin = trace["origin"]
                 nextop = trace["transit"][0]["id"]
                 M[origin][nextop][1] = M[origin][nextop][1] + 1
-                frauds = frauds +1
                 for i in range(len(trace["transit"])-1):
                     source = trace["transit"][i]["id"]
                     target = trace["transit"][i+1]["id"]
-                    M[source][target][1] = M[source][target][1] + 1 
-                    #Revenue[target] = Revenue[target] +  TrustManager.calcRevenue(trace)
-                    Revenue[target/ProviderConfig.n_cluster_size] = Revenue[target/ProviderConfig.n_cluster_size] + TrustManager.calcRevenue(trace)
-
-
+                    if source in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries/2-ProviderConfig.intermidiaries_participation/2,ProviderConfig.n_providers+ProviderConfig.n_intermidiaries/2+ProviderConfig.intermidiaries_participation/2):
+                        M[source][target][1] = M[source][target][1] + 1
+                        Revenue[target] = Revenue[target] +  TrustManager.calcRevenue(trace)
+                        #Revenue[target/ProviderConfig.n_cluster_size] = Revenue[target/ProviderConfig.n_cluster_size] + euros
+                        #TODO: why ref here
+                        Ref[source][target] = Ref[source][target] +1
 
                     if  FraudStrategy.sybil and target in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
                         pos = 0
@@ -73,12 +74,42 @@ class TrustManager:
                             for k in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
                                 M[k][target][0] = 0
                                 M[k][target][1] = 0
-                                Tinit[n_groups-1] = 0.1#TODO aggiusta
+                                Tinit[n_groups-1] = 0.1 #TODO aggiusta
 
 
                     #if target in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters):
-                    Ref[source][target] = Ref[source][target] +1
+        
 
+        participating_intermidiaries = ((ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters) * 50)/100
+        fraud_detection=0
+        fraud_detection_ref = 0
+        fraud_detection_percentage = 0
+        fraudster_identification = 0
+        fraudster_identification_ref = 0
+        fraudster_identification_percentage = 0
+
+        study_scenario=False
+        if study_scenario:
+            for trace in traces:
+                if trace["fraud"]!=0: #c'è frode
+                    fraud_detection_ref = fraud_detection_ref  + 1 
+                    if trace["termin"] in range(0, participating_providers ):
+                        fraud_detection = fraud_detection + 1 
+                        for i in range(len(trace["transit"])-1):
+                            fraudster_identification_ref = fraudster_identification_ref +1
+                            if i in range(ProviderConfig.n_providers, ProviderConfig.n_providers + participating_intermidiaries):
+                                fraudster_identification= fraudster_identification+1
+            if fraudster_identification_ref != 0 and fraud_detection_ref!=0:
+                fraud_detection_percentage = ((fraud_detection_ref - fraud_detection)/fraud_detection_ref)*100
+                fraudster_identification_percentage = ((fraudster_identification_ref-fraudster_identification)/fraudster_identification_ref)*100
+            #print("fraud dection percentage: " + str(fraud_detection_percentage))
+            #print("fraudster identification pecentage: " + str(fraudster_identification_percentage))
+
+        '''
+
+        Fraud probability
+
+        '''
 
         for j in range(ProviderConfig.n_fraudsters):
             pos = 0
@@ -92,20 +123,26 @@ class TrustManager:
         for f in fraudsters_behaviour:
             if f[1] == 0 and f[0]==0:
                 #previeni divisione zero, inserisvi v neutro
-                v=50
+                pass
             else:
-                v=(100*f[0])/(f[0]+f[1])
-            fraud_behaviour = fraud_behaviour+v #la percentuale di chiamate oneste rispetto a quelle negative
+                fraud_behaviour = fraud_behaviour+(100*f[0])/(f[0]+f[1])
+            #la percentuale di chiamate oneste rispetto a quelle negative
         fraud_behaviour = fraud_behaviour / ProviderConfig.n_fraudsters
+        print("fraudster honesty behaviour " + str(fraudsters_behaviour))
 
-        #print(fraudsters_behaviour)
 
+        '''
+        
+        Reputation before false positive reduction
+
+        '''
 
         for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters):
             pos = 0
             for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
                 pos = pos + Ref[i][j]
             Tref[j] = (1.0+pos)/(2.0+pos) #neg = 0
+        #da togliere, ridurre il vettore!!
         for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
             Tref[j] = 0
         #print ("\nReference score:")
@@ -117,27 +154,32 @@ class TrustManager:
         #print ("\nWorst case:")
         #print(Tworstcase)
 
-        ''' preTrust ''' 
+        '''
+
+        preTrust 
+
+        ''' 
+
         if TrustConfig.pretrust_strategy:
             for trace in traces:
                 if trace["fraud"] == 1:
                     ''' sconto da operatore di origine a primo intermediario '''
                     origin = trace["origin"]
                     nextop = trace["transit"][0]["id"]
-                    if TrustConfig.l_cascade_agreements > 0 and nextop not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries):
+                    if TrustConfig.l_cascade_agreements > 0 and nextop not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and M[origin][nextop][1]>0:
                         M[origin][nextop][1] = M[origin][nextop][1] - 1
-                        #Revenue[nextop] = Revenue[nextop] -  TrustManager.calcRevenue(trace)
-                        Revenue[nextop/ProviderConfig.n_cluster_size] = Revenue[nextop/ProviderConfig.n_cluster_size] -  TrustManager.calcRevenue(trace)
+                        Revenue[nextop] = Revenue[nextop] -  TrustManager.calcRevenue(trace)
+                        #Revenue[nextop/ProviderConfig.n_cluster_size] = Revenue[nextop/ProviderConfig.n_cluster_size] -  TrustManager.calcRevenue(trace)
                     ''' sconto da intermmediario a intermediario successivo '''
                     for i in range(len(trace["transit"])-1):
                             source = trace["transit"][i]["id"]
                             target = trace["transit"][i+1]["id"]
                             discount = 0
-                            if i < TrustConfig.l_cascade_agreements and target not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries):
+                            if i < TrustConfig.l_cascade_agreements and target not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and M[source][target][1]>0:
                                 discount = 1.0 / (i+2)
                             M[source][target][1] = M[source][target][1] - discount
-                            Revenue[target/ProviderConfig.n_cluster_size] =  Revenue[target/ProviderConfig.n_cluster_size] -  TrustManager.calcRevenue(trace)*(1.0/(2.0+i))
-                            #Revenue[target] =  Revenue[target] -  TrustManager.calcRevenue(trace)*(1.0/(1.0+i))
+                            #Revenue[target/ProviderConfig.n_cluster_size] =  Revenue[target/ProviderConfig.n_cluster_size] -  TrustManager.calcRevenue(trace)*(1.0/(2.0+i))
+                            Revenue[target] =  Revenue[target] - TrustManager.calcRevenue(trace)*(1.0/(1.0+i))
            
 
 
@@ -147,7 +189,12 @@ class TrustManager:
 
 
 
-        ''' simmetry '''
+        ''' 
+
+        simmetry 
+
+        '''
+
         if TrustConfig.symmetry_strategy:
             for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
                 for i in range(j+1):
@@ -160,7 +207,12 @@ class TrustManager:
             #print ("\nSimmetry:")
             #print(Tsimmetry)
 
-        ''' aggregate by target '''
+        ''' 
+
+        Group reputation
+
+
+        '''
         Trow = [[0 for k in range(2)] for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
         Tscore = [0 for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
         for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
@@ -174,7 +226,13 @@ class TrustManager:
             Tscore[j] = (1.0+pos)/(2.0+pos+neg)
             
 
-        ''' combine within cluster '''
+        ''' 
+
+        cluster strategy
+
+        '''
+
+
         if TrustConfig.clustering_strategy:
 
             Tscore = TrustManager.printRes(M)
@@ -196,6 +254,19 @@ class TrustManager:
             #print (Tscore)
 
 
+
+
+        '''
+
+
+        RESULT
+
+
+
+        '''
+
+
+
         if TrustConfig.symmetry_strategy  and TrustConfig.pretrust_strategy and TrustConfig.clustering_strategy:
 
             #i falsi positivi li calcolo solo per gli onesti
@@ -209,7 +280,6 @@ class TrustManager:
                 fp_pretrust[i] = (Tref[i+ProviderConfig.n_providers]-Tpretrust[i+ProviderConfig.n_providers])*100
                 fp_simmetry[i] = (Tref[i+ProviderConfig.n_providers]-Tsimmetry[i+ProviderConfig.n_providers])*100
                 fp_cluster[i]  = (Tref[i+ProviderConfig.n_providers]-Tscore[i+ProviderConfig.n_providers])*100
-      
 
         #print ("\n\nFalse positive reference:")
         #print (fp_ref)
@@ -219,138 +289,122 @@ class TrustManager:
         #print (fp_simmetry)
         #print ("\nFalse positive reduction with Cluster:")
         #print (fp_cluster)
-
         #print("revenue", Revenue)
-
         #print("\nSybil final score:" + str(Tscore[ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-1]))
 
         
+
         
-        weights = [0 for s in range(ProviderConfig.n_intermidiaries)]
-        for i in range(ProviderConfig.n_intermidiaries):
-            if Tscore[i+ProviderConfig.n_providers] <= 0.5:
-                weights[i] = 0
-            else:
-                weights[i] = Tscore[i+ProviderConfig.n_providers] - 0.5
         numeratore = 0
         denominatore = 0
         for  i in range(ProviderConfig.n_intermidiaries):
-            numeratore = numeratore + Tscore[i+ProviderConfig.n_providers]*weights[i]
-            denominatore = denominatore + weights[i]
+            numeratore = numeratore + Tscore[i+ProviderConfig.n_providers] #*weights[i]
+        denominatore =  ProviderConfig.n_intermidiaries #denominatore + weights[i]
         average = numeratore / denominatore
         x=0
+        cnt = 0
         for  i in range(ProviderConfig.n_intermidiaries):
-            if Tscore[i+ProviderConfig.n_providers] > 0.5:
-                x = x+(Tscore[i+ProviderConfig.n_providers] - average)**2
-        x = x / (ProviderConfig.n_intermidiaries)
+            #if Tscore[i+ProviderConfig.n_providers] > 0.5:
+            cnt = cnt + 1
+            x = x+(Tscore[i+ProviderConfig.n_providers] - average)**2
+        x = x / cnt
         standarddev = math.sqrt(x)
-        threshold = average - standarddev #- 0.003
-        #print("\nthreshold: " + str(threshold))
-
-
-
-        '''
-        n_groups2 = ProviderConfig.n_intermidiaries / ProviderConfig.n_cluster_size
-        revenue2 = [0 for i in range(n_groups2)]
-        for i in range(n_groups2):
-            revenue2[i] = Revenue[i+ProviderConfig.n_providers/ProviderConfig.n_cluster_size]
-
-        print revenue2
-
-       
-        y_medium = 0
-        for i in range(n_groups2):
-            y_medium = y_medium + revenue2[i]
-        y_medium = y_medium / n_groups2
-        print("medio pre gradiente: " + str(y_medium))
-        d = 0
-        for i in range(n_groups2):
-            d = d + (revenue2[i]-y_medium)**2
-
-        go = True
-
-        cmax = 50
-        c = 0
-        y_medium = y_medium - 5
-        inc  = 1
-        old = d
-        while(c < cmax):
-            c = c + 1
-            new = 0
-            for i in range(n_groups2):
-                new = new + (revenue2[i]-(y_medium))**2
-            
-
-            if new < old:
-                print("+"+str(new))
-                y_medium = y_medium + 2
-
-            if old < new:
-                print("-"+str(old))
-                y_medium = y_medium  -2
-            if new == old:
-                print("=")
-                c = cmax
-        '''      
-                
-                
-
-
-        '''
-        fraudsters_behaviour = [[0 0] for i in range(ProviderConfig.n_fraudsters)]
-        for trace in traces:
-            for peer in trace["transit"]:
-                if peer["id"] in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
-                    if 
-        '''
-
-
-
+        threshold = average - TrustConfig.std_dev*standarddev #99%=2,58 95%=1.96
+        if threshold < 0.5:
+            threshold = 0.5
 
         
-        flasepositive = 0
+        falsepositive = 0
         falsenegative = 0
         fraudsters = 0
+        nullfalsepositive = 0
+        nullfalsenegative = 0
+        
         for i in range(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-            if Tscore[i] < threshold and i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
-                fraudsters = fraudsters +1
-            if Tscore[i] < threshold and i not in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
-                flasepositive = flasepositive +1 
 
-            if Tscore[i] >= threshold and i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
+            if Tscore[i] < threshold and i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
+                print("fraudster is: " + str(i) + " with score values: " +  str(Tscore[i]) +"<"+str(threshold))
+                fraudsters = fraudsters +1
+            if Tscore[i] < threshold and i not in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
+                falsepositive = falsepositive +1 
+
+            if Tscore[i] > threshold and i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
                 falsenegative = falsenegative +1
+
+            if Tscore[i] == 0.5 and i not in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
+                nullfalsepositive = nullfalsepositive+1
+
+            if Tscore[i] == 0.5 and i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
+                nullfalsenegative = nullfalsenegative +1
+
+        
+        '''
+        for i in range(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
+            #fraudsters
+            if i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
+                isFraud = False
+                if Tscore[i] < 0.5:
+                    isFraud = True
+                if Tscore[i] < threshold:
+                    isFraud = True
+                if isFraud:
+                    fraudsters = fraudsters + 1
+                else:
+                    falsenegative = falsenegative +1
+            else:
+                if Tscore[i] < threshold:
+                    flasepositive=flasepositive+1
+        '''
+
+        
+        print ("detected frauds raw data:"+str(fraudsters))
+        print ("fp raw data:"+str(falsepositive) + " null fp " + str(nullfalsepositive))
+        print ("fn raw data:"+str(falsenegative)+ " null fn " + str(nullfalsenegative))
+        fraudstersPercentage = (fraudsters * 100) / ProviderConfig.n_fraudsters
+        falsepositivePercentage = (falsepositive * 100)/ProviderConfig.n_intermidiaries
+        falsenegativePercentage = (falsenegative * 100)/ProviderConfig.n_fraudsters
+
+
+        '''
+        if TrustConfig.revenue_strategy:
+            AverageRevenue = 0
+            for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
+                AverageRevenue = AverageRevenue + Revenue[i]
+            AverageRevenue = AverageRevenue / ProviderConfig.n_fraudsters
+        '''
 
         fraudLosses = 0
         fraudSaved = 0
-
-        fraudGroups = ProviderConfig.n_fraudsters / ProviderConfig.n_cluster_size
-
-        if TrustConfig.clustering_strategy:
-            for i in range(n_groups-fraudGroups-1, n_groups):
+        if TrustConfig.revenue_strategy:
+            for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
                 fraudLosses = fraudLosses + Revenue[i]
-                #print("group" + str(Tgroup[i]))
-                if Tgroup[i] < threshold:
+                if Tscore[i] < threshold:
                     fraudSaved = fraudSaved + Revenue[i]
-        Loss = 100*(fraudLosses-fraudSaved)/fraudLosses
+
+        fraudAverageRevenue = (fraudLosses-fraudSaved)/(ProviderConfig.n_fraudsters/ProviderConfig.n_cluster_size)
+
+        if fraudLosses == 0:
+            Loss = 0
+        else:
+            Loss = 100*(fraudLosses-fraudSaved)/fraudLosses
+
+        RevenuePercentage = 100-Loss
 
 
-        fraudstersPercentage = (fraudsters * 100) / ProviderConfig.n_fraudsters
-        falsepositivePercentage = (flasepositive * 100)/ProviderConfig.n_intermidiaries
-        falsenegativePercentage = (falsenegative * 100)/ProviderConfig.n_fraudsters
+
         
 
-
+        '''
         print("\nConfig:")
-        print("fraudsters: " + str(ProviderConfig.n_fraudsters*100/ProviderConfig.n_intermidiaries)+"%")
-        print("fraud calls: " + str(TraceConfig.n_call_fraud*100/TraceConfig.n_call)+"%")
+        #print("fraudsters: " + str(ProviderConfig.n_fraudsters*100/ProviderConfig.n_intermidiaries)+"%")
+        #print("fraud calls: " + str(TraceConfig.n_call_fraud*100/TraceConfig.n_call)+"%")
         print("Fraudsters honesty behaviour: " + str(fraud_behaviour) +"%")
-
-        print("\nResults:")
         print("Fraudsters revealed: "+ str(fraudstersPercentage)+"%")
         print("False positive: "+ str(falsepositivePercentage)+"%")
         print("False negative: "+ str(falsenegativePercentage)+"%")
+        print("Fraud average revenue: " + str(RevenuePercentage))
         print("Economic Loss: " + str(Loss)+" %")
-
+        '''
 
 
 
@@ -408,7 +462,7 @@ class TrustManager:
 
         if Result.graph3:
             #N = ProviderConfig.n_intermidiaries+ProviderConfig.n_providers
-            N = n_groups;
+            N = ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries;
             ind = np.arange(N)  # the x locations for the groups
             width = 0.2    # the width of the bars
             std = [0 for s in range(N)]
@@ -459,6 +513,8 @@ class TrustManager:
         #autolabel(rects5)
 
         plt.show()
+        v = [fraud_behaviour, fraudstersPercentage, RevenuePercentage, Loss, falsepositivePercentage, falsenegativePercentage, fraudAverageRevenue]
+        return v
 
 
     @staticmethod

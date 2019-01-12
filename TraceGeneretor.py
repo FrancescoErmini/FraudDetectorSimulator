@@ -9,12 +9,13 @@ class TraceGeneretor:
 		pass
 
 	@staticmethod	
-	def generateCalls():
+	def generateCalls(variable_call, variable_call_frauds):
+
 		random.seed(9001)
 
 		traces = []  # [trace] * self.n_call
 		
-		for i in range( TraceConfig.n_call):
+		for i in range( variable_call):
 
 			trace = {
 				"cid": 0,
@@ -36,7 +37,7 @@ class TraceGeneretor:
 			cid = i
 			intermidiaries = []			
 			#honest call, symmetry. all intermediaries are honest
-			if i in range(TraceConfig.n_call-TraceConfig.n_call_fraud):
+			if i in range(variable_call-variable_call_frauds):#TraceConfig.n_call_fraud):
 				fraud = 0
 				endPoints = TraceGeneretor.generateEndPoints(False)
 				#popolo il vettore degli intermediari
@@ -50,7 +51,7 @@ class TraceGeneretor:
 					duration_fas = (1/60.0)*FraudType.fas_duration
 					durationA = durationA + duration_fas
 				if FraudType.bypass_fraud:
-					rateA = rateA + random.uniform(FraudType.bypass_revenue-0.02, FraudType.bypass_revenue+0.02)
+					rateA = rateA + random.uniform(FraudType.bypass_revenue-0.3, FraudType.bypass_revenue+0.2)
 				if FraudType.lrn_fraud:
 					rateA = random.uniform(TarifConfig.rate_inter_min , TarifConfig.rate_inter_max)
 					rateB = rateA
@@ -121,7 +122,7 @@ class TraceGeneretor:
 		endPoints = [origin, termin]
 		return endPoints
 
-
+	'''
 	@staticmethod
 	def generateNodesChain(fraud):
 		l_chain = TraceConfig.l_chain
@@ -129,10 +130,19 @@ class TraceGeneretor:
 			l_chain = 2
 		count = 1
 		nodes = []
-		nodes.append(random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1))
+		#first node, choose between everyone or only honest depends on cases:
+		#case of no frauds, every one is candidate.
+		if TraceConfig.n_call_fraud == 0:
+			nodes.append(random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries-1))
+		#in case of disguised malicious, even fraudsters can partecipates in honset call
+		if fraud==False and FraudStrategy.disguised_malicious:
+			nodes.append(random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1))
+		else:
+			nodes.append(random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1))
 		while count < (l_chain-1):
 			#aggiungo l_chain-1 nodi onesti evitando di inserire nodi di uno stesso gruppo. (ignorato se cluster startegy = flase)
-			node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
+			#node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters + ProviderConfig.n_honest_fraudsters  -1)
+			node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1)
 			if not TraceGeneretor.duplicateNodeInGroup(nodes,node):
 				nodes.append(node)
 				count = count +1
@@ -149,6 +159,62 @@ class TraceGeneretor:
 				lastNode = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
 		
 		nodes.append(lastNode)
+		return nodes
+	'''
+
+	@staticmethod
+	def generateNodesChain(fraud):
+		l_chain = TraceConfig.l_chain
+		if FraudStrategy.next_hop_strategy != 3 and fraud==True:
+			l_chain = 2
+
+		firstnode = 0
+		nodes = []
+		lastnode = 0
+
+		#sia nodi onesti che nodi fraudolenti instradano chiamate oneste
+		if fraud==False and FraudStrategy.disguised_malicious==True: 
+			#first node
+			firstnode=random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1)
+			nodes.append(firstnode)
+			count = 1
+			#l_chain-1 nodes
+			while count < (l_chain-1):
+				node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1)
+				if not TraceGeneretor.duplicateNodeInGroup(nodes,node):
+					nodes.append(node)
+					count = count +1
+			lastnode = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-1)
+			nodes.append(lastnode)
+
+		#solo nodi onesti instradano chiamate oneste
+		if fraud==False and FraudStrategy.disguised_malicious==False: 
+			firstnode=random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
+			nodes.append(firstnode)
+			count = 1
+			#l_chain-1 nodes
+			while count < (l_chain-1):
+				node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
+				if not TraceGeneretor.duplicateNodeInGroup(nodes,node):
+					nodes.append(node)
+					count = count +1
+			lastnode = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries- ProviderConfig.n_fraudsters-1)
+			nodes.append(lastnode)
+
+		#L'ultimo nodo deve essere fraudolento, gli altri onesti, sia nel disguised sia nel pure
+		if fraud==True:
+			firstnode=random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
+			nodes.append(firstnode)
+			count = 1
+			#l_chain-1 nodes
+			while count < (l_chain-1):
+				node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
+				if not TraceGeneretor.duplicateNodeInGroup(nodes,node):
+					nodes.append(node)
+					count = count +1
+			lastnode = random.randint(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1)
+			nodes.append(lastnode)
+
 		return nodes
 
 	@staticmethod
