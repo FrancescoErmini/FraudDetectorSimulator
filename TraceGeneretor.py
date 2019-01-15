@@ -1,6 +1,14 @@
 import json
 import random
 from config import ProviderConfig, TraceConfig, TrustConfig, FraudStrategy, FraudType, TarifConfig
+import sys
+import cPickle
+import hashlib
+
+def bytes(jsonObj):
+	JSON_as_string = cPickle.dumps(jsonObj)
+	return sys.getsizeof(JSON_as_string)
+
 
 
 class TraceGeneretor:
@@ -14,8 +22,40 @@ class TraceGeneretor:
 		random.seed(9001)
 
 		traces = []  # [trace] * self.n_call
-		
+		trace2 = {
+				"cid": 0,
+				"origin": 0,
+				"termin": 0,
+				"fraud":0,
+				"transit": [],
+				"durationA": 0,
+				"durationB": 0,
+				"rateA": 0,
+				"rateB": 0
+			}
+		print("bytes for one trace sim: "+ str(bytes(trace2)))
 		for i in range( variable_call):
+
+			if i == variable_call/100*10:
+				print("10%")
+			if i == variable_call/100*20:
+				print("20%")
+			if i == variable_call/100*30:
+				print("30%")
+			if i == variable_call/100*40:
+				print("40%")
+			if i == variable_call/100*50:
+				print("50%")
+			if i == variable_call/100*60:
+				print("60%")
+			if i == variable_call/100*70:
+				print("70%")
+			if i == variable_call/100*80:
+				print("80%")
+			if i == variable_call/100*90:
+				print("90%")
+			if i == variable_call-1:
+				print("100%")
 
 			trace = {
 				"cid": 0,
@@ -29,7 +69,7 @@ class TraceGeneretor:
 				"rateB": 0
 			}
 
-			durationA = random.randint(TarifConfig.duration_min,TarifConfig.duration_max)#minuti
+			durationA = 6 #random.randint(TarifConfig.duration_min,TarifConfig.duration_max)#minuti
 			durationB = durationA
 			rateA = random.uniform(TarifConfig.rate_local_min,TarifConfig.rate_local_max)#euro local termination tarif iva inclusa
 			rateB = rateA
@@ -51,7 +91,7 @@ class TraceGeneretor:
 					duration_fas = (1/60.0)*FraudType.fas_duration
 					durationA = durationA + duration_fas
 				if FraudType.bypass_fraud:
-					rateA = rateA + random.uniform(FraudType.bypass_revenue-0.3, FraudType.bypass_revenue+0.2)
+					rateA = rateA + FraudType.bypass_revenue
 				if FraudType.lrn_fraud:
 					rateA = random.uniform(TarifConfig.rate_inter_min , TarifConfig.rate_inter_max)
 					rateB = rateA

@@ -15,14 +15,14 @@ import math
 def main():
 	n_iteration = 10
 	minute  = 0
-	n_call = 41666 # 10 MIN
-	n_call_fraud = 2083 # 10 min 5%
+	n_call = 416400 #41666 # 10 MIN
+	n_call_fraud = 20820 #1000 #2083 # 10 min 5%
 
-	f_revenue= []
-	f_revenue_abs = []
-	f_detect = []
-	f_detect_error_fp = []
-	f_detect_error_fn = []
+	fraudrevenues= []
+	fraudrevenues_abs = []
+	fraudetection = []
+	falsepositives = []
+	falsenegatives = []
 	x = [0 for i in range(1+n_iteration)]
 	y = [0 for i in range(1+n_iteration)]
 	c = 0
@@ -32,30 +32,34 @@ def main():
 
 	if not go:
 		TraceGeneretor.generateCalls(n_call,n_call_fraud)
-		res = TrustManager.computeTrust()
-		print("fraud="+str(100.0-res[0])+" detect="+str(res[1])+" revenue="+str(res[3])+" fp="+str(res[4])+" fn="+str(res[5])+" avRev="+str(res[6]))
+
+		#res = TrustManager.computeTrust()
+		#print("fraud="+str(res[0])+" detect="+str(res[1])+" pFp="+str(res[2])+" pFN="+str(res[3])+" avRev="+str(res[4]))
 	
 
 	if go:
 		max_call_fraud = (n_call*30)/100
 		#for i in range((n_call*30)/100, -(n_call/n_iteration), -(n_call/n_iteration)):
 		for i in range(100, max_call_fraud, max_call_fraud/n_iteration):
+       # v = [pFraud, pDetect, pFalsepositive, pFalsenegative,  fraudAverageRevenue, fraudsters]
+
 			TraceGeneretor.generateCalls(n_call,i)
 			res = TrustManager.computeTrust()
-			f_detect_error_fp.append([100.0-res[0], res[4] ] )
-			f_detect_error_fn.append([100.0-res[0], res[5] ] )
-			f_revenue.append([100.0-res[0], res[3]])
-			f_detect.append([100.0-res[0], res[1]])
-			f_revenue_abs.append([100.0-res[0], res[6]])
 
-			print("fraud="+str(100.0-res[0])+" detect="+str(res[1])+" revenue="+str(res[3])+" fp="+str(res[4])+" fn="+str(res[5])+" avRev="+str(res[6]))
+			falsepositives.append([res[0], res[4] ] )
+			fraudetection.append([res[0], res[1]])
+
+			falsenegatives.append([res[0], res[5] ] )
+			fraudrevenues.append([res[0], res[3]])
+
+			print("p fraud="+str(res[0])+" p detect="+str(res[1])+" p fp="+str(res[2])+" p fn ="+str(res[3])+" fraudRevAVG="+str(res[5]))
 
 
 
 		if Result.graphB:
 			fig, ax = plt.subplots()
-			ax.scatter(*zip(*f_detect_error), s=10,c='r', marker="s", label='fp')
-			ax.scatter(*zip(*f_detect_error_fn), s=10, c='g', marker="s", label='fn')
+			ax.scatter(*zip(*fraudetection_error), s=10,c='r', marker="s", label='fp')
+			ax.scatter(*zip(*falsenegatives), s=10, c='g', marker="s", label='fn')
 			plt.xlim(100, 0) 
 			plt.ylim(0, 100) 
 			ax.set_ylabel('P error detention [%]')
@@ -73,9 +77,9 @@ def main():
 		
 		if Result.graphA:
 			fig, ax = plt.subplots()
-			ax.scatter(*zip(*f_revenue), s=5, c='b', marker="s", label='revenue')
-			ax.scatter(*zip(*f_detect), s=5, c='r', marker="o", label='detention')
-			ax.scatter(*zip(*f_detect_error_fn), s=10, c='g', marker="s", label='fn')
+			ax.scatter(*zip(*fraudrevenues), s=5, c='b', marker="s", label='revenue')
+			ax.scatter(*zip(*fraudetection), s=5, c='r', marker="o", label='detention')
+			ax.scatter(*zip(*falsenegatives), s=10, c='g', marker="s", label='fn')
 			plt.xlim(100, 0) 
 			plt.ylim(0, 100) 
 			ax.set_ylabel('P detention [%]')
@@ -88,9 +92,9 @@ def main():
 
 		if Result.graphC:
 			fig, ax = plt.subplots()
-			ax.scatter(*zip(*f_revenue_abs), s=5, c='b', marker="s", label='abs revenue')
-			ax.scatter(*zip(*f_detect), s=5, c='r', marker="o", label='detention')
-			ax.scatter(*zip(*f_detect_error_fp), s=10, c='g', marker="s", label='fn')
+			ax.scatter(*zip(*fraudrevenues_abs), s=5, c='b', marker="s", label='abs revenue')
+			ax.scatter(*zip(*fraudetection), s=5, c='r', marker="o", label='detention')
+			ax.scatter(*zip(*falsepositives), s=10, c='g', marker="s", label='fn')
 			plt.xlim(100, 0) 
 			plt.ylim(0, 100) 
 			ax.set_ylabel('Fraud Revenue[%]')

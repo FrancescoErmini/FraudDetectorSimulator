@@ -1,11 +1,11 @@
 class ProviderConfig:
-	n_providers =  200#deve essere pari
-	n_intermidiaries = 1000 #somma di provider e intermediari deve essere multiplo di cluster size
-	n_fraudsters = 50# un cluster
+	n_providers =  200 #30 #deve essere pari
+	n_intermidiaries = 700 #1000 #somma di provider e intermediari deve essere multiplo di cluster size
+	n_fraudsters = 35 #5%degli intermediari
 	n_cluster_size = 1
 	
-	provider_participation = 80 #%di partecipazione dei nodi di terminazione
-	intermidiaries_participation = 50
+	provider_participation = 20 #%di partecipazione dei nodi di terminazione
+	intermidiaries_participation = 1
 
 
 class TarifConfig:
@@ -17,8 +17,8 @@ class TarifConfig:
 	rate_inter_max = 1.0
 	
 class TraceConfig:
-	n_call = 5000
-	n_call_fraud = 1
+	n_call = 416666
+	n_call_fraud = 20820 
 	l_chain = 4
 	n_call_per_minute = 5000 #gloabli 9512 locali=168
 	file_path = "calltraces.json"
@@ -29,6 +29,7 @@ class TrustConfig:
 	pretrust_strategy = True
 	clustering_strategy = False
 	revenue_strategy = True
+	ref = False
 	l_cascade_agreements = 2 #minore di l_chain - 1 #da controllare se nex_ho_strategy = 1|2
 	std_dev = 1 #99%=2,58 95%=1.96
 '''
@@ -38,7 +39,7 @@ class TrustConfig:
 '''
 
 class FraudStrategy:
-	next_hop_strategy = 3
+	next_hop_strategy = 1
 	sybil=False
 	disguised_malicious = False
 
@@ -46,7 +47,7 @@ class FraudType:
 	bypass_fraud = True
 	fas_fraud =False
 	lrn_fraud = False
-	bypass_revenue = 0.8 #guadagno al minuti stimato per bypass fraud
+	bypass_revenue = 0.05 #guadagno al minuti stimato per bypass fraud
 	fas_duration = 10 #secondi
 	lrn_price_rapport = 2 #quante volte di pi (moltiplicazione) costa la chiamata rurale
 
