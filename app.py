@@ -15,8 +15,8 @@ import math
 def main():
 	n_iteration = 10
 	minute  = 0
-	n_call = 416400 #41666 # 10 MIN
-	n_call_fraud = 20820 #1000 #2083 # 10 min 5%
+	n_call = 4666 #416400 #41666 # 10 MIN
+	n_call_fraud = 283 #20820 #1000 #2083 # 10 min 5%
 
 	fraudrevenues= []
 	fraudrevenues_abs = []
@@ -33,8 +33,8 @@ def main():
 	if not go:
 		TraceGeneretor.generateCalls(n_call,n_call_fraud)
 
-		#res = TrustManager.computeTrust()
-		#print("fraud="+str(res[0])+" detect="+str(res[1])+" pFp="+str(res[2])+" pFN="+str(res[3])+" avRev="+str(res[4]))
+		res = TrustManager.computeTrust()
+		print("fraud="+str(res[0])+" detect="+str(res[1])+" pFp="+str(res[2])+" pFN="+str(res[3])+" avRev="+str(res[4]))
 	
 
 	if go:

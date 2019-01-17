@@ -1,11 +1,11 @@
 class ProviderConfig:
-	n_providers =  200 #30 #deve essere pari
-	n_intermidiaries = 700 #1000 #somma di provider e intermediari deve essere multiplo di cluster size
-	n_fraudsters = 35 #5%degli intermediari
+	n_providers =  20 #30 #deve essere pari
+	n_intermidiaries = 1000 #1000 #somma di provider e intermediari deve essere multiplo di cluster size
+	n_fraudsters = 50 #5%degli intermediari
 	n_cluster_size = 1
 	
-	provider_participation = 20 #%di partecipazione dei nodi di terminazione
-	intermidiaries_participation = 1
+	provider_participation = 50 #%di partecipazione dei nodi di terminazione
+	intermidiaries_participation = 100
 
 
 class TarifConfig:
@@ -17,8 +17,8 @@ class TarifConfig:
 	rate_inter_max = 1.0
 	
 class TraceConfig:
-	n_call = 416666
-	n_call_fraud = 20820 
+	n_call = 41666
+	n_call_fraud = 2820 
 	l_chain = 4
 	n_call_per_minute = 5000 #gloabli 9512 locali=168
 	file_path = "calltraces.json"
@@ -47,7 +47,7 @@ class FraudType:
 	bypass_fraud = True
 	fas_fraud =False
 	lrn_fraud = False
-	bypass_revenue = 0.05 #guadagno al minuti stimato per bypass fraud
+	bypass_revenue = 0.1 #guadagno al minuti stimato per bypass fraud
 	fas_duration = 10 #secondi
 	lrn_price_rapport = 2 #quante volte di pi (moltiplicazione) costa la chiamata rurale
 
