@@ -4,6 +4,7 @@
 import json
 import math
 import numpy as np
+import h5py
 import matplotlib.pyplot as plt
 import matplotlib
 #import pandas as pd
@@ -34,7 +35,14 @@ class TrustManager:
 
         fraudsters_behaviour = [[0 for k in range(2)] for i in range(ProviderConfig.n_fraudsters)]
         Revenue = [0 for g in range(ProviderConfig.n_intermidiaries+ProviderConfig.n_providers)]
-        M = [[[0 for k in range(2)] for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+        #M = [[[0 for k in range(2)] for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+        
+        N = ProviderConfig.n_providers+ProviderConfig.n_intermidiaries
+        #with h5py.File("m.hdf5") as f:
+        #    M = f.create_dataset("m", shape=(N,N, 2), dtype=np.uint8)
+        fx = h5py.File('m.hdf5', 'a')
+        matrix = fx['m']
+
         Tscore = [0 for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
 
         provider_participation = (ProviderConfig.n_providers*ProviderConfig.provider_participation)/100
@@ -116,12 +124,14 @@ class TrustManager:
                 #print("+")
                 origin = trace["origin"]
                 nextop = trace["transit"][0]["id"]
-                M[origin][nextop][0] = M[origin][nextop][0] + 1
+                #M[origin][nextop][0] = M[origin][nextop][0] + 1
+                matrix[origin,nextop,0]=matrix[origin,nextop,0] + 1
                 for i in range(len(trace["transit"])-1):
                     source = trace["transit"][i]["id"]
                     target = trace["transit"][i+1]["id"]
                     if source in range(ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2-intermidiaries_participation/2,ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2+intermidiaries_participation/2):
-                        M[source][target][0] = M[source][target][0] + 1
+                        #M[source][target][0] = M[source][target][0] + 1
+                        matrix[source,target,0] = matrix[source,target,0] + 1
                         if TrustConfig.ref:
                             Ref[source][target] = Ref[source][target] +1
 
@@ -129,50 +139,40 @@ class TrustManager:
                 frauds_counter = frauds_counter + 1
                 origin = trace["origin"]
                 nextop = trace["transit"][0]["id"]
-                M[origin][nextop][1] = M[origin][nextop][1] + 1
-                if TrustConfig.pretrust_strategy and TrustConfig.l_cascade_agreements > 0 and nextop not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and M[origin][nextop][1]>0:
-                        M[origin][nextop][1] = M[origin][nextop][1] - 1
+                #M[origin][nextop][1] = M[origin][nextop][1] + 1
+                matrix[origin,nextop,1]=matrix[origin,nextop,1] + 1
+                if TrustConfig.pretrust_strategy and TrustConfig.l_cascade_agreements > 0 and nextop not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and matrix[origin][nextop][1]>0:
+                        #M[origin][nextop][1] = M[origin][nextop][1] - 1
+                        matrix[origin,nextop,1]=matrix[origin,nextop,1] - 1
                 for i in range(len(trace["transit"])-1):
                     source = trace["transit"][i]["id"]
                     target = trace["transit"][i+1]["id"]
                     reports_counter_ref = reports_counter_ref + 1
                     if source in range(ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2-intermidiaries_participation/2,ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2+intermidiaries_participation/2):
                         reports_counter = reports_counter + 1
-                        M[source][target][1] = M[source][target][1] + 1
+                        #M[source][target][1] = M[source][target][1] + 1
+                        matrix[source,target,1] = matrix[source,target,1] + 1
                         Revenue[target] = Revenue[target] +  TrustManager.calcRevenue(trace)
                         if TrustConfig.ref:
                             Ref[source][target] = Ref[source][target] +1
-                        if TrustConfig.pretrust_strategy and i < TrustConfig.l_cascade_agreements and target not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and M[source][target][1]>0:  
-                                    M[source][target][1] = M[source][target][1] -  1.0 / (i+2)
+                        if TrustConfig.pretrust_strategy and i < TrustConfig.l_cascade_agreements and target not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and matrix[source][target][1]>0:  
+                            #M[source][target][1] = M[source][target][1] -  1.0 / (i+2)
+                            matrix[source,target,1] = matrix[source,target,1] -  1.0 / (i+2)
+                        if TrustConfig.symmetry_strategy and matrix[target][source][1]>=1:  
+                            #M[source][target][1] = M[source][target][1] - 1
+                            #M[target][source][1] = M[target][source][1] - 1
+                            matrix[source,target,1] = matrix[source,target,1] -  1
+                            matrix[target,source,1] = matrix[target,source,1] -  1
 
-                    
-                    '''
-                    if  FraudStrategy.sybil and target in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                        pos = 0
-                        neg = 0
-                        for k in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                            pos = pos + M[k][target][0]
-                            neg = neg + M[k][target][1]
+        fx.close()                
+        
 
-                        reputation = (float)((pos +1.0)/(neg+pos+2.0))
-                        if reputation < 0.5 and trace["cid"]%111==0:
-                            print("\nSybil: Fraudster id " + str(target) + " has change identity " + " with r= " + str(reputation)) 
-                            for k in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                                M[k][target][0] = 0
-                                M[k][target][1] = 0
-                                Tinit[n_groups-1] = 0.1 #TODO aggiusta
-                    '''
-
-
-
-
-                    #if target in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters):
-      
 
         '''
         
         Reputation before false positive reduction
 
+        '''
         '''
         if TrustConfig.ref:
 
@@ -188,7 +188,7 @@ class TrustManager:
             Tworstcase = TrustManager.printRes(M)
             #print ("\nWorst case:")
             #print(Tworstcase)
-
+        '''
         '''
 
         preTrust nota bene: vaanno aggiunte funizionalità del bebbo
@@ -223,11 +223,12 @@ class TrustManager:
         simmetry 
 
         '''
-
+        '''
         if TrustConfig.symmetry_strategy:
             print("start simmetry")
             for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
                 for i in range(j+1):
+                    #print matrix[i,j,0]
                     discount = min(M[i][j][1],M[j][i][1])
                     M[i][j][1] = M[i][j][1] - discount
                     M[j][i][1] = M[j][i][1] - discount
@@ -236,14 +237,14 @@ class TrustManager:
             Tsimmetry = TrustManager.printRes(M)
             #print ("\nSimmetry:")
             #print(Tsimmetry)
-
-
+        '''
+        
         ''' 
 
         cluster strategy
 
         '''
-
+        '''
 
         if TrustConfig.clustering_strategy:
 
@@ -273,7 +274,7 @@ class TrustManager:
                     Tscore[peer] = (Tscore[peer] * Tgroup[group]) / ((Tscore[peer] * Tgroup[group]) + ((1-Tscore[peer])*(1-Tgroup[group])))
             #print ("\nClustering:")
             #print (Tscore)
-
+        '''
 
 
 
@@ -282,13 +283,53 @@ class TrustManager:
 
         RESULT
 
-
-
         '''
-        Tscore = TrustManager.printRes(M)
+
+
+        ''''
+        with h5py.File('m.hdf5', 'r') as f:
+            dset = f['m'][:]
+
+        f.close()
+        print(data[1,1,0])
+        '''
+        '''
+        with h5py.File('m.hdf5', 'r') as f:
+           matrix = f['m']
+           print(min(matrix))
+           print(max(matrix))
+           print(matrix[:15])
+        with h5py.File('resize_dataset.hdf5', 'r') as f:
+            dset = f['dataset']
+            print(dset[99])
+        '''
+        #f = h5py.File('m.hdf5', 'r')
+        #matrix = f['m']
+        
+
+        #Tscore = TrustManager.printRes(M)
+        print("res..")
+
+        fr = h5py.File('m.hdf5', 'r')
+        matrixy = fr['m'][:]
+        
+        fr.close()
+
+        for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
+            pos = 0
+            neg = 0
+            for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
+                
+                pos = pos + matrixy[i,j,0]
+                neg = neg + matrixy[i,j,1]
+                #print pos
+            #Trow[j][0] = pos
+            #Trow[j][1] = neg
+            Tscore[j] = (1.0+pos)/(2.0+pos+neg)
 
 
 
+        print("calc threshold")
         numeratore = 0
         denominatore = 0
         for  i in range(ProviderConfig.n_intermidiaries):
@@ -309,9 +350,9 @@ class TrustManager:
 
         
 
-        
+        print("compare threshold")
         for i in range(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-            print("compare threshold")
+            
             if i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters,ProviderConfig.n_providers+ ProviderConfig.n_intermidiaries):
                 if Tscore[i] < 0.5:
                     print("fraudster is: " + str(i) + " with score values: " +  str(Tscore[i]) +"<"+str(threshold))
@@ -489,6 +530,7 @@ class TrustManager:
             #Trow[j][1] = neg
             Ts[j] = (1.0+pos)/(2.0+pos+neg)
         return Ts
+
 
     @staticmethod
     def calcRevenue(trace):

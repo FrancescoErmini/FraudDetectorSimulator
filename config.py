@@ -4,7 +4,7 @@ class ProviderConfig:
 	n_fraudsters = 50 #5%degli intermediari
 	n_cluster_size = 1
 	
-	provider_participation = 50 #%di partecipazione dei nodi di terminazione
+	provider_participation = 100 #%di partecipazione dei nodi di terminazione
 	intermidiaries_participation = 100
 
 
