@@ -8,36 +8,27 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import math
+import json
 
-
-#import scipy.optimize as opt;
 
 
 def main():
-	n_iteration = 10
-	minute  = 0
-	n_call = 4666 #416400 #41666 # 10 MIN
-	n_call_fraud = 283 #20820 #1000 #2083 # 10 min 5%
 
-	fraudrevenues= []
-	fraudrevenues_abs = []
-	fraudetection = []
-	falsepositives = []
-	falsenegatives = []
-	x = [0 for i in range(1+n_iteration)]
-	y = [0 for i in range(1+n_iteration)]
-	c = 0
+	regenerateTrace=True
+	if regenerateTrace:
+		TraceGeneretor.generateTraceFile(TraceConfig.n_call,TraceConfig.fraud_percentage,TraceConfig.l_chunk)
 
-	
-	go = False
+	res = TrustManager.computeTrust(TrustConfig.detect_delay, ProviderConfig.provider_participation, ProviderConfig.intermidiaries_participation)
 
+
+	'''
 	if not go:
 		TraceGeneretor.generateCalls(n_call,n_call_fraud)
 
-		res = TrustManager.computeTrust()
+		
 		print("fraud="+str(res[0])+" detect="+str(res[1])+" pFp="+str(res[2])+" pFN="+str(res[3])+" avRev="+str(res[4]))
-	
-
+	'''
+	'''
 	if go:
 		max_call_fraud = (n_call*30)/100
 		#for i in range((n_call*30)/100, -(n_call/n_iteration), -(n_call/n_iteration)):
@@ -105,7 +96,7 @@ def main():
 			#plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, 1))(np.unique(x)))
 			plt.legend(loc='upper right')
 			plt.show()
-		
+	'''	
 
 		
 		
@@ -113,5 +104,3 @@ def main():
 
 if __name__== "__main__":
   main()
-
-#revenue è la percentuale che esprime quanto in percentuale il frodatore ha guadagnato rispetto al guadagno che avrebbe fatto se non fosse stato individuato

@@ -17,10 +17,12 @@ class TarifConfig:
 	rate_inter_max = 1.0
 	
 class TraceConfig:
-	n_call = 41666
-	n_call_fraud = 2820 
+	n_call = 10000
+	n_call_fraud = 500
+	fraud_percentage = 5	#per evitare problemi nella divisione, deve essere coerente con il rapporto sopra
+	l_chunk = 1000 			#per esigenze di calcolo. deve essere sottomultiplo di n_call 
 	l_chain = 4
-	n_call_per_minute = 5000 #gloabli 9512 locali=168
+	n_call_per_minute =  10000 #9512 
 	file_path = "calltraces.json"
 
 
@@ -30,6 +32,7 @@ class TrustConfig:
 	clustering_strategy = False
 	revenue_strategy = True
 	ref = False
+	detect_delay = 60 #minutes
 	l_cascade_agreements = 2 #minore di l_chain - 1 #da controllare se nex_ho_strategy = 1|2
 	std_dev = 1 #99%=2,58 95%=1.96
 '''

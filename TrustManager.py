@@ -18,35 +18,32 @@ class TrustManager:
 
 
     @staticmethod
-    def computeTrust():
-        ''' referenze without false-positive cases '''
-        if TrustConfig.ref:
-            Ref = [[ 0 for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
-            Tref = [0 for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+    def computeTrust(detect_delay, provider_participation_percentage, intermidiaries_participation_percentage):
         
-        n_groups = (ProviderConfig.n_providers+ProviderConfig.n_intermidiaries) / ProviderConfig.n_cluster_size
-        if FraudStrategy.sybil:
-            Tinit = [1 for g in range(n_groups)]
-
-        if TrustConfig.clustering_strategy:
-            Trow = [[0 for k in range(2)] for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+       
+        N = ProviderConfig.n_providers+ProviderConfig.n_intermidiaries
+        provider_participation = (ProviderConfig.n_providers*provider_participation_percentage)/100
+        intermidiaries_participation = (ProviderConfig.n_intermidiaries*intermidiaries_participation_percentage)/100
+        max_calls = detect_delay*(TraceConfig.n_call_per_minute*provider_participation_percentage/100)
+        if max_calls < TraceConfig.l_chunk:
+            print("WARNING: call analyzed may not contein fraud traces")
 
 
 
         fraudsters_behaviour = [[0 for k in range(2)] for i in range(ProviderConfig.n_fraudsters)]
         Revenue = [0 for g in range(ProviderConfig.n_intermidiaries+ProviderConfig.n_providers)]
-        #M = [[[0 for k in range(2)] for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
-        
-        N = ProviderConfig.n_providers+ProviderConfig.n_intermidiaries
-        #with h5py.File("m.hdf5") as f:
-        #    M = f.create_dataset("m", shape=(N,N, 2), dtype=np.uint8)
-        fx = h5py.File('m.hdf5', 'a')
-        matrix = fx['m']
-
         Tscore = [0 for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+        #M = [[[0 for k in range(2)] for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+        with h5py.File("data.hdf5", "a") as f:
+            f.create_dataset("bigM", shape=(N,N, 2), dtype=np.uint8)
+        
+        fx = h5py.File('data.hdf5', 'a')
+        matrix = fx['bigM']
 
-        provider_participation = (ProviderConfig.n_providers*ProviderConfig.provider_participation)/100
-        intermidiaries_participation = (ProviderConfig.n_intermidiaries*ProviderConfig.intermidiaries_participation)/100
+        
+
+
+
 
         fraudsters = 0
         temporary_fraudsters =0
@@ -61,22 +58,36 @@ class TrustManager:
         reports_counter=0
         count = 0
 
-
-
         pHonesty = 0
         fraudBehaviour = 0
-
-
 
         fraudAverageRevenue=0
         pDetect=0
         pFalsepositive=0
         pFalsenegative=0
         fraudRevenuePercentage=0
+
+
+        ''' referenze without false-positive cases '''
+        if TrustConfig.ref:
+            Ref = [[ 0 for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+            Tref = [0 for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+        
+        n_groups = (ProviderConfig.n_providers+ProviderConfig.n_intermidiaries) / ProviderConfig.n_cluster_size
+        if FraudStrategy.sybil:
+            Tinit = [1 for g in range(n_groups)]
+
+        if TrustConfig.clustering_strategy:
+            Trow = [[0 for k in range(2)] for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+
+
+
+
        
         with open(TraceConfig.file_path) as f:
             data = json.load(f)
         traces = data["traces"]
+
 
         frauds_counter = 0
         reports_counter = 0
@@ -109,6 +120,11 @@ class TrustManager:
             if count == variable_call-1:
                 print("100%")
             count = count + 1
+
+            if count > max_calls:
+                print("ANALYSIS STOPPED AT: " + str(count))
+                return
+
 
             if FraudStrategy.disguised_malicious:
                 for i in range(len(trace["transit"])):
@@ -164,156 +180,15 @@ class TrustManager:
                             matrix[source,target,1] = matrix[source,target,1] -  1
                             matrix[target,source,1] = matrix[target,source,1] -  1
 
-        fx.close()                
+       
+        print("stop read traces.")
+
+        fx.flush()
+        fx.close()
+
+        fr = h5py.File('data.hdf5', 'r')
+        matrixy = fr['bigM'][:]
         
-
-
-        '''
-        
-        Reputation before false positive reduction
-
-        '''
-        '''
-        if TrustConfig.ref:
-
-            for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters):
-                pos = 0
-                for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                    pos = pos + Ref[i][j]
-                Tref[j] = (1.0+pos)/(2.0+pos) #neg = 0
-            #da togliere, ridurre il vettore!!
-            for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                Tref[j] = 0
-           
-            Tworstcase = TrustManager.printRes(M)
-            #print ("\nWorst case:")
-            #print(Tworstcase)
-        '''
-        '''
-
-        preTrust nota bene: vaanno aggiunte funizionalità del bebbo
-
-        ''' 
-        '''
-        if TrustConfig.pretrust_strategy:
-            for trace in traces:
-                if trace["fraud"] == 1 and trace["termin"] in range(ProviderConfig.n_providers/2-provider_participation/2, ProviderConfig.n_providers/2 + provider_participation/2):
-                    origin = trace["origin"]
-                    nextop = trace["transit"][0]["id"]
-                    if TrustConfig.l_cascade_agreements > 0 and nextop not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and M[origin][nextop][1]>0:
-                        M[origin][nextop][1] = M[origin][nextop][1] - 1
-                    for i in range(len(trace["transit"])-1):
-                            source = trace["transit"][i]["id"]
-                            target = trace["transit"][i+1]["id"]
-                            discount = 0
-                            if source in range(ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2-intermidiaries_participation/2,ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2+intermidiaries_participation/2):
-                                if TrustConfig.pretrust_strategy and i < TrustConfig.l_cascade_agreements and target not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and M[source][target][1]>0:  
-                                    M[source][target][1] = M[source][target][1] -  1.0 / (i+2)
-                                #Revenue[target] =  Revenue[target] - TrustManager.calcRevenue(trace)*(1.0/(2.0+i))
-            
-            Tpretrust = TrustManager.printRes(M)
-            #print ("\nPre trust:")
-            #print(Tpretrust)
-
-
-        '''
-
-        ''' 
-
-        simmetry 
-
-        '''
-        '''
-        if TrustConfig.symmetry_strategy:
-            print("start simmetry")
-            for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                for i in range(j+1):
-                    #print matrix[i,j,0]
-                    discount = min(M[i][j][1],M[j][i][1])
-                    M[i][j][1] = M[i][j][1] - discount
-                    M[j][i][1] = M[j][i][1] - discount
-
-            
-            Tsimmetry = TrustManager.printRes(M)
-            #print ("\nSimmetry:")
-            #print(Tsimmetry)
-        '''
-        
-        ''' 
-
-        cluster strategy
-
-        '''
-        '''
-
-        if TrustConfig.clustering_strategy:
-
-            Tscore = TrustManager.printRes(M)
-
-            for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                pos = 0
-                neg = 0
-                for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
-                    pos = pos + M[i][j][0]
-                    neg = neg + M[i][j][1]
-                Trow[j][0]=pos
-                Trow[j][1]=neg
-            
-            #l_groups = ProviderConfig.n_intermidiaries / ProviderConfig.n_cluster_size
-            Tgroup = [0 for g in range(n_groups)]
-            #Tgroup = [0 for g in range(l_groups)]
-            for group in range( n_groups ):
-                pos = 0
-                neg = 0
-                for interm in range( group*ProviderConfig.n_cluster_size , ((group+1)*ProviderConfig.n_cluster_size)):
-                    pos = pos + Trow[interm][0]
-                    neg = neg + Trow[interm][1]
-                Tgroup[group] = (1.0+pos)/(2.0+pos+neg) * Tinit[group]
-
-                for peer in range( group*ProviderConfig.n_cluster_size , (group+1)*ProviderConfig.n_cluster_size ):
-                    Tscore[peer] = (Tscore[peer] * Tgroup[group]) / ((Tscore[peer] * Tgroup[group]) + ((1-Tscore[peer])*(1-Tgroup[group])))
-            #print ("\nClustering:")
-            #print (Tscore)
-        '''
-
-
-
-        '''
-
-
-        RESULT
-
-        '''
-
-
-        ''''
-        with h5py.File('m.hdf5', 'r') as f:
-            dset = f['m'][:]
-
-        f.close()
-        print(data[1,1,0])
-        '''
-        '''
-        with h5py.File('m.hdf5', 'r') as f:
-           matrix = f['m']
-           print(min(matrix))
-           print(max(matrix))
-           print(matrix[:15])
-        with h5py.File('resize_dataset.hdf5', 'r') as f:
-            dset = f['dataset']
-            print(dset[99])
-        '''
-        #f = h5py.File('m.hdf5', 'r')
-        #matrix = f['m']
-        
-
-        #Tscore = TrustManager.printRes(M)
-        print("res..")
-
-        fr = h5py.File('m.hdf5', 'r')
-        matrixy = fr['m'][:]
-        
-        fr.close()
 
         for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
             pos = 0
@@ -327,7 +202,9 @@ class TrustManager:
             #Trow[j][1] = neg
             Tscore[j] = (1.0+pos)/(2.0+pos+neg)
 
-
+        fr.close()
+        with h5py.File("data.hdf5","a") as f:
+            del f['bigM']
 
         print("calc threshold")
         numeratore = 0
