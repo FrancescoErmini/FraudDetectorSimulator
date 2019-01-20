@@ -27,19 +27,27 @@ class TraceGeneretor:
 	@staticmethod	
 	def generateTraceFile(n_call, fraud_percentage, n_chunk):
 
+		file_json = ["trace1.json","trace2.json","trace3.json","trace4.json","trace5.json","trace6.json","trace7.json"]
+		for i in range(7):
+			traces = TraceGeneretor.generateCalls( 694*60*24,  34*60*24, i*(694*60*24))
+			calltraces = { "traces" : traces }
+			with open(file_json[i], 'w') as outfile:
+				json.dump(calltraces, outfile, sort_keys=True, indent=4, separators=(',', ': '))
+
+		'''
 		traces = []		
 		
 		iterations = n_call / n_chunk
 
 		for i in range(iterations):
 			traces = TraceGeneretor.generateCalls( n_chunk,  (n_chunk * fraud_percentage)/100, i*n_chunk)
-			if i == 0:
+			if 0 == 0:
 				calltraces = { "traces" : traces }
 				with open(TraceConfig.file_path, 'w') as outfile:
 					json.dump(calltraces, outfile, sort_keys=True, indent=4, separators=(',', ': '))
 			else:
 				TraceGeneretor.append_to_json(TraceConfig.file_path, traces)
-
+		'''
 	@staticmethod
 	def printProgress(i, n_call):
 		if i == n_call/100*10:

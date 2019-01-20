@@ -1,11 +1,11 @@
 class ProviderConfig:
-	n_providers =  20 #30 #deve essere pari
+	n_providers =  200 #30 #deve essere pari
 	n_intermidiaries = 1000 #1000 #somma di provider e intermediari deve essere multiplo di cluster size
-	n_fraudsters = 50 #5%degli intermediari
+	n_fraudsters = 17 #5%degli intermediari
 	n_cluster_size = 1
 	
-	provider_participation = 100 #%di partecipazione dei nodi di terminazione
-	intermidiaries_participation = 100
+	provider_participation = 10 #%di partecipazione dei nodi di terminazione
+	intermidiaries_participation = 1
 
 
 class TarifConfig:
@@ -17,12 +17,12 @@ class TarifConfig:
 	rate_inter_max = 1.0
 	
 class TraceConfig:
-	n_call = 10000
-	n_call_fraud = 500
+	n_call = 694*60*24 #call in 24h
+	n_call_fraud = 34*60*24
 	fraud_percentage = 5	#per evitare problemi nella divisione, deve essere coerente con il rapporto sopra
 	l_chunk = 1000 			#per esigenze di calcolo. deve essere sottomultiplo di n_call 
 	l_chain = 4
-	n_call_per_minute =  10000 #9512 
+	n_call_per_minute =  694  #9512 
 	file_path = "calltraces.json"
 
 
@@ -32,8 +32,8 @@ class TrustConfig:
 	clustering_strategy = False
 	revenue_strategy = True
 	ref = False
-	detect_delay = 60 #minutes
-	l_cascade_agreements = 2 #minore di l_chain - 1 #da controllare se nex_ho_strategy = 1|2
+	detect_delay = 60*24 # 24 h
+	l_cascade_agreements = 3 #minore di l_chain - 1 #da controllare se nex_ho_strategy = 1|2
 	std_dev = 1 #99%=2,58 95%=1.96
 '''
 1 - not_responding
@@ -42,7 +42,7 @@ class TrustConfig:
 '''
 
 class FraudStrategy:
-	next_hop_strategy = 1
+	next_hop_strategy = 3
 	sybil=False
 	disguised_malicious = False
 

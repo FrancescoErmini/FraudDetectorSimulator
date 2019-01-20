@@ -15,6 +15,7 @@ import json
 def main():
 
 	regenerateTrace=True
+	
 	if regenerateTrace:
 		TraceGeneretor.generateTraceFile(TraceConfig.n_call,TraceConfig.fraud_percentage,TraceConfig.l_chunk)
 
