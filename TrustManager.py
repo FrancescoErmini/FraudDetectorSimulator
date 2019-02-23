@@ -13,6 +13,7 @@ from matplotlib.colors import LinearSegmentedColormap
 #matplotlib.style.use('ggplot')
 #from pandas import DataFrame
 from config import ProviderConfig, TraceConfig, TrustConfig, FraudStrategy, FraudType, Result
+import jsonlines
 
 class TrustManager:
 
@@ -82,7 +83,12 @@ class TrustManager:
 
         #variable_call = len(traces)
 
-        file_json = ["trace1.json","trace2.json","trace3.json","trace4.json","trace5.json","trace6.json","trace7.json"]
+        #file_json = ["trace1.json","trace2.json","trace3.json","trace4.json","trace5.json","trace6.json","trace7.json"]
+
+
+        contents = open(file_json, "r").read() 
+        data = [json.loads(str(item)) for item in contents.strip().split('\n')]
+        print data
 
         for file in file_json:
 

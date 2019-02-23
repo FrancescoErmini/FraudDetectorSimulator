@@ -1,20 +1,36 @@
 import json
 import random
-from config import ProviderConfig, TraceConfig, TrustConfig, FraudStrategy, FraudType, TarifConfig
+from config import *
 import sys
-import cPickle
-import hashlib
+#import cPickle
+#import hashlib
+#import getopt
 
-def bytes(jsonObj):
-	JSON_as_string = cPickle.dumps(jsonObj)
-	return sys.getsizeof(JSON_as_string)
-
+#def bytes(jsonObj):
+#	JSON_as_string = cPickle.dumps(jsonObj)
+#	return sys.getsizeof(JSON_as_string)
 
 
 class TraceGeneretor:
+	n_providers=0
+	n_intermidiaries=0
+	n_fraudsters=0
+	n_calls=0
+	n_calls_fraud=0
+	frauds_percentage=0
 
-	def __init__(self):
-		pass
+	def __init__(self, providers, intermidiaries, fraudsters_percentage, calls, frauds_percentage):
+		super(TraceGeneretor, self).__init__()
+		self.n_providers = providers
+		self.n_intermidiaries = intermidiaries 
+		self.n_fraudsters = intermidiaries * fraudsters_percentage // 100
+		self.n_calls = calls
+		self.n_calls_fraud = calls * frauds_percentage // 100
+		self.frauds_percentage = frauds_percentage
+		
+
+
+	
 	'''
 	n_call sono le chiamate totali
 	fraud percentage e la percentuale di fraudolente rispetto alle totali ( 50 vuol dire 50)
@@ -22,85 +38,16 @@ class TraceGeneretor:
 	n_chunk serve a spezzare l'inserimento delle chiamate nel file. Ad esempio se voglio inserie un milione di chiamate
 	posso definire n chunck = 1000 cosi che python calcola una traccia di n_chunck chiamate e la aggiunge al file generale 
 	ogni in modo incrementale.
+
+	terminating_traffic (minutes)
+
+	time_period (minutes)
+
 	'''
 
-	@staticmethod	
-	def generateTraceFile(n_call, fraud_percentage, n_chunk):
-
-		file_json = ["trace1.json","trace2.json","trace3.json","trace4.json","trace5.json","trace6.json","trace7.json"]
-		for i in range(7):
-			traces = TraceGeneretor.generateCalls( 694*60*24,  34*60*24, i*(694*60*24))
-			calltraces = { "traces" : traces }
-			with open(file_json[i], 'w') as outfile:
-				json.dump(calltraces, outfile, sort_keys=True, indent=4, separators=(',', ': '))
-
-		'''
-		traces = []		
-		
-		iterations = n_call / n_chunk
-
-		for i in range(iterations):
-			traces = TraceGeneretor.generateCalls( n_chunk,  (n_chunk * fraud_percentage)/100, i*n_chunk)
-			if 0 == 0:
-				calltraces = { "traces" : traces }
-				with open(TraceConfig.file_path, 'w') as outfile:
-					json.dump(calltraces, outfile, sort_keys=True, indent=4, separators=(',', ': '))
-			else:
-				TraceGeneretor.append_to_json(TraceConfig.file_path, traces)
-		'''
-	@staticmethod
-	def printProgress(i, n_call):
-		if i == n_call/100*10:
-				print("10%")
-		if i == n_call/100*20:
-			print("20%")
-		if i == n_call/100*30:
-			print("30%")
-		if i == n_call/100*40:
-			print("40%")
-		if i == n_call/100*50:
-			print("50%")
-		if i == n_call/100*60:
-			print("60%")
-		if i == n_call/100*70:
-			print("70%")
-		if i == n_call/100*80:
-			print("80%")
-		if i == n_call/100*90:
-			print("90%")
-		if i == n_call-1:
-			print("100%")
-
-
-	@staticmethod
-	def append_to_json(filepath, data):
-		# construct JSON fragment as new file ending
-	    new_ending = "},\n" + json.dumps(data,sort_keys=True, indent=4, separators=(',', ': '))[1:-1] + "\n]\n}"
-
-	    # edit the file in situ - first open it in read/write mode
-	    with open(filepath, 'r+') as f:
-
-	        f.seek(0, 2)        # move to end of file
-	        index = f.tell()    # find index of last byte
-	        index -= 1			# skip last } closing
- 
-	        # walking back from the end of file, find the index 
-	        # of the original JSON's closing '}'
-	        while not f.read().startswith('}'):
-	            index -= 1
-	            if index == 0:
-	                raise ValueError("can't find JSON object in {!r}".format(filepath))
-	            f.seek(index)
-
-	        # starting at the original ending } position, write out
-	        # the new ending
-	        f.seek(index)
-	        f.write(new_ending) 
-
-
-
-	@staticmethod	
-	def generateCalls(variable_call, variable_call_frauds, offset):
+	def generateCalls(self, _size, offset):
+		variable_call = _size
+		variable_call_frauds = _size * self.frauds_percentage // 100
 
 		#random.seed(9001)
 
@@ -120,33 +67,34 @@ class TraceGeneretor:
 				"rateB": 0
 			}
 
-			durationA = 6 #random.randint(TarifConfig.duration_min,TarifConfig.duration_max)#minuti
+			durationA = TraceConfig.average_call_duration #random.randint(TraceConfig.duration_min,TraceConfig.duration_max)#minuti
 			durationB = durationA
-			rateA = random.uniform(TarifConfig.rate_local_min,TarifConfig.rate_local_max)#euro local termination tarif iva inclusa
+			#rateA = random.uniform(TraceConfig.average_call_duration.rate_local_min,TraceConfig.rate_local_max)#euro local termination tarif iva inclusa
+			rateA = TraceConfig.tariff_local #euro local termination tarif iva inclusa
 			rateB = rateA
 
 			cid = i + offset
 			intermidiaries = []			
 			#honest call, symmetry. all intermediaries are honest
-			if i in range(variable_call-variable_call_frauds):#TraceConfig.n_call_fraud):
+			if i in range(variable_call-variable_call_frauds):#.n_call_fraud):
 				fraud = 0
-				endPoints = TraceGeneretor.generateEndPoints(False)
+				endPoints = self.generateEndPoints(fraud=False)
 				#popolo il vettore degli intermediari
-				intermidiaries = TraceGeneretor.generateNodesChain(False)
+				intermidiaries = self.generateNodesChain(fraud=False)
 			else: #tracce con frode
 				fraud = 1
-				endPoints = TraceGeneretor.generateEndPoints(True)
-				intermidiaries = TraceGeneretor.generateNodesChain(True)
+				endPoints = self.generateEndPoints(fraud=True)
+				intermidiaries = self.generateNodesChain(fraud=True)
 
-				if FraudType.fas_fraud:
-					duration_fas = (1/60.0)*FraudType.fas_duration
+				if TraceConfig.fas_fraud:
+					duration_fas = (1/60.0)*TraceConfig.fas_duration
 					durationA = durationA + duration_fas
-				if FraudType.bypass_fraud:
-					rateA = rateA + FraudType.bypass_revenue
-				if FraudType.lrn_fraud:
-					rateA = random.uniform(TarifConfig.rate_inter_min , TarifConfig.rate_inter_max)
+				if TraceConfig.bypass_fraud:
+					rateA = rateA + TraceConfig.bypass_revenue
+				if TraceConfig.lrn_fraud:
+					rateA = TraceConfig.rate_international #.uniform(TraceConfig.rate_inter_min , TraceConfig.rate_inter_max)
 					rateB = rateA
-					rateA = rateA / float(FraudType.lrn_price_rapport)
+					rateA = rateA / float(TraceConfig.lrn_price_rapport)
 
 			tmp = []
 			for intermidiary in intermidiaries:
@@ -170,32 +118,30 @@ class TraceGeneretor:
 
 		return traces
 
-		#with open(TraceConfig.file_path, 'w') as outfile:
+		#with open(.file_path, 'w') as outfile:
 		#	json.dump(calltraces, outfile, sort_keys=True, indent=4, separators=(',', ': '))
 		
 
 
-	@staticmethod
-	def generateEndPoints(fraud):
+	def generateEndPoints(self, fraud):
 		if fraud==False:
-			origin = random.randint(0,ProviderConfig.n_providers)
-			termin = random.randint(0,ProviderConfig.n_providers)
+			origin = random.randint(0,self.n_providers)
+			termin = random.randint(0,self.n_providers)
 			while(termin == origin):
-				termin = random.randint(0,ProviderConfig.n_providers)
+				termin = random.randint(0,self.n_providers)
 		else:
 			#i frodatori operano unidirezionalmente su una rotta
-			origin = random.randint(0,ProviderConfig.n_providers / 2)
-			termin = random.randint(ProviderConfig.n_providers/2, ProviderConfig.n_providers)
+			origin = random.randint(0,self.n_providers / 2)
+			termin = random.randint(self.n_providers/2, self.n_providers)
 
 		endPoints = [origin, termin]
 		return endPoints
 
 
 	
-	@staticmethod
-	def generateNodesChain(fraud):
-		l_chain = TraceConfig.l_chain
-		if FraudStrategy.next_hop_strategy != 3 and fraud==True:
+	def generateNodesChain(self, fraud):
+		l_chain = TraceConfig.providers_per_call
+		if TraceConfig.fraudsters_response_strategy != 3 and fraud==True:
 			l_chain = 2
 
 		firstnode = 0
@@ -203,58 +149,57 @@ class TraceGeneretor:
 		lastnode = 0
 
 		#sia nodi onesti che nodi fraudolenti instradano chiamate oneste
-		if fraud==False and FraudStrategy.disguised_malicious==True: 
+		if fraud==False and TraceConfig.fraudsters_camouflage == True: 
 			#first node
-			firstnode=random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1)
+			firstnode=random.randint(self.n_providers, self.n_providers + self.n_intermidiaries -1)
 			nodes.append(firstnode)
 			count = 1
 			#l_chain-1 nodes
 			while count < (l_chain-1):
-				node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1)
-				if not TraceGeneretor.duplicateNodeInGroup(nodes,node):
+				node = random.randint(self.n_providers, self.n_providers + self.n_intermidiaries -1)
+				if not self.duplicateNodeInGroup(nodes,node):
 					nodes.append(node)
 					count = count +1
-			lastnode = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-1)
+			lastnode = random.randint(self.n_providers, self.n_providers+self.n_intermidiaries-1)
 			nodes.append(lastnode)
 
 		#solo nodi onesti instradano chiamate oneste
-		if fraud==False and FraudStrategy.disguised_malicious==False: 
-			firstnode=random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
+		if fraud==False and TraceConfig.fraudsters_camouflage == False: 
+			firstnode=random.randint(self.n_providers, self.n_providers + self.n_intermidiaries - self.n_fraudsters -1)
 			nodes.append(firstnode)
 			count = 1
 			#l_chain-1 nodes
 			while count < (l_chain-1):
-				node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
-				if not TraceGeneretor.duplicateNodeInGroup(nodes,node):
+				node = random.randint(self.n_providers, self.n_providers + self.n_intermidiaries - self.n_fraudsters -1)
+				if not self.duplicateNodeInGroup(nodes,node):
 					nodes.append(node)
 					count = count +1
-			lastnode = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries- ProviderConfig.n_fraudsters-1)
+			lastnode = random.randint(self.n_providers, self.n_providers+self.n_intermidiaries- self.n_fraudsters-1)
 			nodes.append(lastnode)
 
 		#L'ultimo nodo deve essere fraudolento, gli altri onesti, sia nel disguised sia nel pure
 		if fraud==True:
-			firstnode=random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
+			firstnode=random.randint(self.n_providers, self.n_providers + self.n_intermidiaries - self.n_fraudsters -1)
 			nodes.append(firstnode)
 			count = 1
 			#l_chain-1 nodes
 			while count < (l_chain-1):
-				node = random.randint(ProviderConfig.n_providers, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters -1)
-				if not TraceGeneretor.duplicateNodeInGroup(nodes,node):
+				node = random.randint(self.n_providers, self.n_providers + self.n_intermidiaries - self.n_fraudsters -1)
+				if not self.duplicateNodeInGroup(nodes,node):
 					nodes.append(node)
 					count = count +1
-			lastnode = random.randint(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries -1)
+			lastnode = random.randint(self.n_providers+self.n_intermidiaries - self.n_fraudsters, self.n_providers + self.n_intermidiaries -1)
 			nodes.append(lastnode)
 
 		return nodes
 
-	@staticmethod
-	def duplicateNodeInGroup(nodes, node):
+	def duplicateNodeInGroup(self, nodes, node):
 		if TrustConfig.clustering_strategy == False:
 			return False
 		found = False
 		for n in nodes:
 			#n = nodes[i]
-			if (n/ProviderConfig.n_cluster_size) == (node/ProviderConfig.n_cluster_size):
+			if (n/TraceConfig.n_cluster_size) == (node/TraceConfig.n_cluster_size):
 				found = True
 		return found
 
