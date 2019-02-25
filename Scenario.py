@@ -5,6 +5,7 @@ class Scenario:
    n_providers=0
    n_intermidiaries=0
    n_fraudsters=0
+   fraudsters_percentage = 0
    n_calls=0
    n_calls_fraud=0
    frauds_percentage=0
@@ -13,6 +14,7 @@ class Scenario:
       super(Scenario, self).__init__()
       self.n_providers = providers
       self.n_intermidiaries = intermidiaries 
+      self.fraudsters_percentage=fraudsters_percentage
       self.n_fraudsters = intermidiaries * fraudsters_percentage // 100
       self.n_calls = calls
       self.n_calls_fraud = calls * frauds_percentage // 100
@@ -21,6 +23,7 @@ class Scenario:
    def createCsv(self, fileName):
       f = open(fileName,'w')
       for i in range(0,self.n_calls):
+         Tools.printProgress( i, self.n_calls)
 
          durationA = TraceConfig.average_call_duration #random.randint(TraceConfig.duration_min,TraceConfig.duration_max)#minuti
          durationB = durationA
@@ -44,21 +47,27 @@ class Scenario:
             if TraceConfig.lrn_fraud:
                rateA = TraceConfig.tariff_local  #.uniform(TraceConfig.rate_inter_min , TraceConfig.rate_inter_max)
          
-         trace = str(i)+','
-         trace += str(endPoints[0])+','
-         trace += str(endPoints[1])+','
-         trace += str(len(nodes))+','
-         for node in nodes:
-            trace = trace + str(node) + ','
-         trace += str(durationA)+','
-         trace += str(durationB)+','
-         trace += str(rateA)+','
-         trace += str(rateB)+','
-         trace += str(fraud)
+         """
+         Note: element order shold match above values in config.py
+         class Csv:
+            ID = 0
+            FRAUD = 1
+            ORIGIN = 2
+            TERMIN = 3
+            TRANSIT = 4+i
+         """
 
+         trace = str(i)
+         trace += ',' + str(fraud)
+         trace += ',' + str(endPoints[0])
+         trace += ',' + str(endPoints[1])
+         for node in nodes:
+            trace = trace + ',' + str(node)
+
+         #new line, new trace
          f.write(trace+'\n')
+      #endfor
       f.close()
-         #print(trace, file=args.outputfile)
 
 
 
@@ -66,9 +75,9 @@ class Scenario:
       chunk = TraceConfig.n_chunk
       limit = chunk-(self.frauds_percentage*chunk//100)
       if index%chunk < limit:
-         return True
-      else:
          return False
+      else:
+         return True
 
    def generateEndPoints(self, fraud):
       if fraud==False:
@@ -149,28 +158,3 @@ class Scenario:
          if (n/TraceConfig.n_cluster_size) == (node/TraceConfig.n_cluster_size):
             found = True
       return found
-
-
-
-   def printProgress(i, n):
-      if i < n//100*10:
-         print("10%")
-      elif i < n//100*20:
-         print("20%")
-      elif i < n//100*30:
-         print("30%")
-      elif i < n//100*40:
-         print("40%")
-      elif i < n//100*50:
-         print("50%")
-      elif i < n//100*60:
-         print("60%")
-      elif i < n//100*70:
-         print("70%")
-      elif i < n//100*80:
-         print("80%")
-      elif i < n//100*90:
-         print("90%")
-      elif i < n:
-         print("100%")
-      return
