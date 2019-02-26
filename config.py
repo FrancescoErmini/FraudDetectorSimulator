@@ -27,7 +27,7 @@ class TraceConfig:
 	fas_duration = 10 #secondi
 
 	n_cluster_size = 1
-	n_chunk = 10
+	n_chunk = 1000
 
 class TrustConfig:
 
@@ -48,10 +48,6 @@ class Csv:
 	TERMIN = 3
 	TRANSIT = 4
 
-
-class m:
-	FRAUD = 1
-	HONEST = 0
 
 
 class Tools:

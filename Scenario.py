@@ -14,14 +14,16 @@ class Scenario:
       super(Scenario, self).__init__()
       self.n_providers = providers
       self.n_intermidiaries = intermidiaries 
-      self.fraudsters_percentage=fraudsters_percentage
-      self.n_fraudsters = intermidiaries * fraudsters_percentage // 100
+      self.fraudsters_percentage=int(fraudsters_percentage)
+      self.n_fraudsters = int(intermidiaries) * int(fraudsters_percentage) // 100
       self.n_calls = calls
-      self.n_calls_fraud = calls * frauds_percentage // 100
-      self.frauds_percentage = frauds_percentage
+      self.n_calls_fraud = int(calls) * int(frauds_percentage) // 100
+      self.frauds_percentage = int(frauds_percentage)
 
    def createCsv(self, fileName):
       f = open(fileName,'w')
+      #header = 'id, fraud, origin, termin, transit1, transit2, transit3, transit4'
+      #f.write(header+'\n')
       for i in range(0,self.n_calls):
          Tools.printProgress( i, self.n_calls)
 
@@ -73,7 +75,7 @@ class Scenario:
 
    def isFraud(self, index):
       chunk = TraceConfig.n_chunk
-      limit = chunk-(self.frauds_percentage*chunk//100)
+      limit = chunk-(int(self.frauds_percentage)*int(chunk)//100)
       if index%chunk < limit:
          return False
       else:

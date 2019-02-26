@@ -45,8 +45,8 @@ class TraceGeneretor:
 
 	'''
 
-	def generateCalls(self, _size, offset):
-		variable_call = _size
+	def generateCalls(self):
+		
 		variable_call_frauds = _size * self.frauds_percentage // 100
 
 		#random.seed(9001)
@@ -122,7 +122,75 @@ class TraceGeneretor:
 		#	json.dump(calltraces, outfile, sort_keys=True, indent=4, separators=(',', ': '))
 		
 
+def generateCallDetail(self):
 
+		#random.seed(9001)
+
+		call = [] 
+		
+		
+			trace = {
+				"cid": 0,
+				"origin": 0,
+				"termin": 0,
+				"fraud":0,
+				"transit": [],
+				"durationA": 0,
+				"durationB": 0,
+				"rateA": 0,
+				"rateB": 0
+			}
+
+			durationA = TraceConfig.average_call_duration #random.randint(TraceConfig.duration_min,TraceConfig.duration_max)#minuti
+			durationB = durationA
+			#rateA = random.uniform(TraceConfig.average_call_duration.rate_local_min,TraceConfig.rate_local_max)#euro local termination tarif iva inclusa
+			rateA = TraceConfig.tariff_local #euro local termination tarif iva inclusa
+			rateB = rateA
+
+			cid = i + offset
+			intermidiaries = []			
+			#honest call, symmetry. all intermediaries are honest
+			if i in range(variable_call-variable_call_frauds):#.n_call_fraud):
+				fraud = 0
+				endPoints = self.generateEndPoints(fraud=False)
+				#popolo il vettore degli intermediari
+				intermidiaries = self.generateNodesChain(fraud=False)
+			else: #tracce con frode
+				fraud = 1
+				endPoints = self.generateEndPoints(fraud=True)
+				intermidiaries = self.generateNodesChain(fraud=True)
+
+				if TraceConfig.fas_fraud:
+					duration_fas = (1/60.0)*TraceConfig.fas_duration
+					durationA = durationA + duration_fas
+				if TraceConfig.bypass_fraud:
+					rateA = rateA + TraceConfig.bypass_revenue
+				if TraceConfig.lrn_fraud:
+					rateA = TraceConfig.rate_international #.uniform(TraceConfig.rate_inter_min , TraceConfig.rate_inter_max)
+					rateB = rateA
+					rateA = rateA / float(TraceConfig.lrn_price_rapport)
+
+			tmp = []
+			for intermidiary in intermidiaries:
+				tmp.append({"id":intermidiary})
+
+			trace["cid"] = cid
+			trace["origin"] = endPoints[0]
+			trace["termin"] = endPoints[1]
+			trace["fraud"] =  fraud
+			trace["transit"] = tmp
+			trace["durationA"] = durationA
+			trace["durationB"] = durationB
+			trace["rateA"] = rateA
+			trace["rateB"]= rateB
+
+
+			#print(trace)
+			traces.append(trace)
+
+		#calltraces = { "traces" : traces }
+
+		return traces
 	def generateEndPoints(self, fraud):
 		if fraud==False:
 			origin = random.randint(0,self.n_providers)

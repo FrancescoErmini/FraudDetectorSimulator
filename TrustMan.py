@@ -8,7 +8,8 @@ import h5py
 import csv
 #import matplotlib.pyplot as plt
 #import matplotlib
-#import pandas as pd
+import pandas as pd
+from pandas import DataFrame
 #import seaborn as sns
 #from matplotlib.colors import LinearSegmentedColormap
 #matplotlib.style.use('ggplot')
@@ -27,6 +28,8 @@ class TrustMan(object):
 	n_calls_fraud=0
 	frauds_percentage=0
 
+	n_honests = 0
+
 	""" output values of updateMatrix() """
 	disguised_behaviour = 0
 	malicious_behaviour = 0
@@ -39,9 +42,21 @@ class TrustMan(object):
 	accusations_counter = 0 #conta quante accuse vengono effettivamente fatte a casua della non risposta degli intermediari
 
 
+
 	global fraudsters_behaviour
 	global Revenue
 	global Tscore
+
+	fraudsters=0
+	falsenegative=0
+	temporary_fraudsters=0
+	undetected=0
+
+	honests = 0
+	falsepositive=0
+	temporary_falsepositive = 0
+	unknown_honesty = 0
+	
 
 	def __init__(self, providers, intermidiaries, fraudsters_percentage, l_chain, calls, frauds_percentage, provider_participation
 		, intermidiaries_participation):
@@ -57,6 +72,8 @@ class TrustMan(object):
 		self.frauds_percentage = frauds_percentage
 		self.n_coop_providers = int(int(provider_participation)*int(providers)//100)
 		self.n_coop_intermidiaries = int(int(intermidiaries_participation)*(int(intermidiaries)-self.n_fraudsters)//100)
+
+		self.n_honests = self.n_intermidiaries - self.n_fraudsters
 
 		self.fraudsters_behaviour = [[0 for k in range(2)] for i in range(self.n_fraudsters)]
 		self.Revenue = [0 for g in range(self.n_intermidiaries)]
@@ -80,11 +97,11 @@ class TrustMan(object):
 
 		count=0
 
-		with open(traces_file, 'r') as f:
-			reader = csv.reader(f)
-			traces = list(reader)
 
-			for trace in traces:
+		chunks = pd.read_csv(traces_file,chunksize=100, sep=',', index_col=False, header=None)
+		for chunk in chunks:
+			data = chunk.values #convert DataFrame to numpy
+			for trace in data:
 
 				Tools.printProgress( count, self.n_calls)
 				count+=1
@@ -101,9 +118,10 @@ class TrustMan(object):
 						if self.isCoopIntermidiary(source):
 							#M[source][target][POS] = M[source][target][POS] + 1
 							matrix[source,target,POS] = matrix[source,target,POS] + 1
-							#if TrustConfig.ref:
-							#	Ref[source][target] = Ref[source][target] +1
-
+							'''
+							if TrustConfig.ref:
+								Ref[source][target] = Ref[source][target] +1
+							'''
 				if self.isCoopProvider(int(trace[Csv.TERMIN])) and self.isFraud(int(trace[Csv.FRAUD])):
 					
 					self.frauds_detector_counter += 1
@@ -123,7 +141,7 @@ class TrustMan(object):
 						source = int(trace[(Csv.TRANSIT+i)])
 						target = int(trace[(Csv.TRANSIT+i+1)])
 						if self.isCoopIntermidiary(source):
-							print("CIOooo")
+							
 							#M[source][target][1] = M[source][target][1] + 1
 							matrix[source,target,NEG] = matrix[source,target,NEG] + 1
 							self.Revenue[target-self.n_providers] +=  TrustMan.calcRevenue()
@@ -138,25 +156,97 @@ class TrustMan(object):
 								matrix[source,target,NEG] = matrix[source,target,NEG] -  1
 								matrix[target,source,NEG] = matrix[target,source,NEG] -  1
 						self.accusations_counter += 1
-		print("Matrix updated.")
+		print("Matrix updated..")
 
-		
-		transactions = [[0 for k in range(2)] for i in range(self.n_intermidiaries)]
+		print("calc reputation..")
+		#transactions = [[0 for k in range(2)] for i in range(self.n_intermidiaries)]
 		for j in range(self.n_providers, N): #scorro ogni intermediario j
+			Tools.printProgress( j - self.n_providers, self.n_intermidiaries)
 			_pos = 0
 			_neg = 0
 			for i in range(N): #scorro tutti gli accusatori i per un intermediario j
 				_pos += matrix[i,j,POS]
 				_neg += matrix[i,j,NEG]
-			transactions[j-self.n_providers][POS] = _pos
-			transactions[j-self.n_providers][NEG] = _neg
+			self.Tscore[j-self.n_providers] = (1.0+_pos)/(2.0+_pos+_neg)
+			#transactions[j-self.n_providers][POS] = _pos
+			#transactions[j-self.n_providers][NEG] = _neg
 		
-		print("DEBUG: ref"+str(self.accusations_counter_ref))
-		print("DEBUG acc :"+str(self.accusations_counter))
-		print("DEBUG disg" + str(self.disguised_behaviour))
-		print("DEBUG malis" + str(self.malicious_behaviour))
 
-		print(transactions)
+		#for k in range(self.n_intermidiaries):
+		#	print(str(self.Tscore[k]) )+ ' <= ' #+ str(transactions[k]))
+		
+
+
+		print("calc threshold:")
+		numeratore = 0
+		denominatore = 0
+		for i in range(self.n_intermidiaries):
+			numeratore += self.Tscore[i] #*weights[i]
+		denominatore =  self.n_intermidiaries #denominatore + weights[i]
+		average = numeratore / denominatore
+		x=0
+		cnt = 0
+		for  i in range(self.n_intermidiaries):
+			#if Tscore[i+ProviderConfig.n_providers] > 0.5:
+			cnt = cnt + 1
+			x = x+(self.Tscore[i] - average)**2
+		x = x / cnt
+		standarddev = math.sqrt(x)
+		threshold = average - standarddev #99%=2,58 95%=1.96
+		print(threshold)
+		if threshold < 0.5:
+			threshold = 0.5
+
+
+		print("compare threshold")
+		for i in range(self.n_intermidiaries):
+		
+			if self.isFraudster(i+self.n_providers):
+				if self.Tscore[i] < 0.5:
+					#print("fraudster is: " + str(i+self.n_providers) + " with score values: " +  str(Tscore[i]) +"<"+str(threshold))
+					self.fraudsters += 1
+
+				if self.Tscore[i] < threshold and self.Tscore[i] > 0.5:
+					self.temporary_fraudsters += 1
+
+				if self.Tscore[i] >= threshold:
+					self.falsenegative += 1
+
+				if self.Tscore[i] == 0.5:
+					self.undetected += 1
+			else:
+				if self.Tscore[i] > 0.9:
+					self.honests += 1
+
+				if self.Tscore[i] < 0.5:
+					self.falsepositive += 1
+
+				if self.Tscore[i] < threshold and self.Tscore[i] > 0.5:
+					self.temporary_falsepositive += 1
+
+				if self.Tscore[i] == 0.5:
+					self.unknown_honesty += 1
+
+
+
+
+		print("DEBUG disguised calls: " + str(self.disguised_behaviour))
+		print("DEBUG malicious calls: " + str(self.malicious_behaviour))
+
+
+
+		print("\nRESULT ON FRAUD DETECTION:  " + str(self.accusations_counter) +"/"+ str(self.accusations_counter_ref) + " accusations deficit" )
+
+		print("\nRESULT ON FRAUDSTERS DETECTION: " + 
+			str(self.fraudsters)+ "/" + str(self.n_fraudsters)+ " detected,   " + 
+			str(self.temporary_fraudsters)+ "/" + str(self.n_fraudsters) +" suspected,  "  +   
+			str(self.falsenegative)+ "/" + str(self.n_fraudsters)+ "  false negative,   " +
+			str(self.undetected)   + "/" + str(self.n_fraudsters)+   " missing.  " )
+		print("\nRESULT ON DETECTION ERRORS: " + 
+			str(self.honests) + "/" + str(self.n_honests) + " honests,  " +
+			str(self.falsepositive) + "/" + str(self.n_honests) + " false positives,  " +			
+			str(self.temporary_falsepositive) + "/" + str(self.n_honests) + " temporary false positives,  " +
+			str(self.unknown_honesty)+ "/" + str(self.n_honests) + " unknown honests.  ")
 
 		fx.flush()
 		fx.close()
@@ -221,8 +311,9 @@ class TrustMan(object):
 			return False
 
 	def measure_fraudsters_behaviour(self, trace):
-		for transit_th in range(self.l_chain):
-			if self.isFraudster(int(trace[Csv.TRANSIT+transit_th])):
+		for i in range(self.l_chain):
+			ind=Csv.TRANSIT+i
+			if self.isFraudster(int(ind)):
 				if not self.isFraud(int(trace[Csv.FRAUD])):
 					self.disguised_behaviour += 1 #le transazioni buone fatte da un frodatre nel campione
 				else:

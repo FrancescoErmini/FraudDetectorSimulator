@@ -35,6 +35,7 @@ class TrustManager:
         Revenue = [0 for g in range(ProviderConfig.n_intermidiaries+ProviderConfig.n_providers)]
         Tscore = [0 for m in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
         #M = [[[0 for k in range(2)] for j in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)] for i in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries)]
+        
         with h5py.File("data.hdf5", "a") as f:
             f.create_dataset("bigM", shape=(N,N, 2), dtype=np.uint8)
         
@@ -86,10 +87,6 @@ class TrustManager:
         #file_json = ["trace1.json","trace2.json","trace3.json","trace4.json","trace5.json","trace6.json","trace7.json"]
 
 
-        contents = open(file_json, "r").read() 
-        data = [json.loads(str(item)) for item in contents.strip().split('\n')]
-        print data
-
         for file in file_json:
 
             with open(file) as f:
@@ -97,28 +94,6 @@ class TrustManager:
             traces = data["traces"]
 
             for trace in traces:
-                '''
-                if count == variable_call/100*10:
-                    print("10%")
-                if count == variable_call/100*20:
-                    print("20%")
-                if count == variable_call/100*30:
-                    print("30%")
-                if count == variable_call/100*40:
-                    print("40%")
-                if count == variable_call/100*50:
-                    print("50%")
-                if count == variable_call/100*60:
-                    print("60%")
-                if count == variable_call/100*70:
-                    print("70%")
-                if count == variable_call/100*80:
-                    print("80%")
-                if count == variable_call/100*90:
-                    print("90%")
-                if count == variable_call-1:
-                    print("100%")
-                '''
 
                 count = count + 1
 
@@ -127,7 +102,7 @@ class TrustManager:
                     return
 
 
-                if FraudStrategy.disguised_malicious:
+                if TraceConfig.fraudsters_camouflage:
                     for i in range(len(trace["transit"])):
                         if trace["transit"][i]["id"] in range(ProviderConfig.n_providers+ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters, ProviderConfig.n_providers+ProviderConfig.n_intermidiaries):
                             if trace["fraud"]==0:
@@ -149,8 +124,8 @@ class TrustManager:
                         if source in range(ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2-intermidiaries_participation/2,ProviderConfig.n_providers+(ProviderConfig.n_intermidiaries-ProviderConfig.n_fraudsters)/2+intermidiaries_participation/2):
                             #M[source][target][0] = M[source][target][0] + 1
                             matrix[source,target,0] = matrix[source,target,0] + 1
-                            if TrustConfig.ref:
-                                Ref[source][target] = Ref[source][target] +1
+                            #if TrustConfig.ref:
+                            #    Ref[source][target] = Ref[source][target] +1
 
                 if trace["fraud"]==1 and trace["termin"] in range(ProviderConfig.n_providers/2-provider_participation/2, ProviderConfig.n_providers/2 + provider_participation/2):
                     frauds_counter = frauds_counter + 1
@@ -170,12 +145,12 @@ class TrustManager:
                             #M[source][target][1] = M[source][target][1] + 1
                             matrix[source,target,1] = matrix[source,target,1] + 1
                             Revenue[target] = Revenue[target] +  TrustManager.calcRevenue(trace)
-                            if TrustConfig.ref:
-                                Ref[source][target] = Ref[source][target] +1
+                            #if TrustConfig.ref:
+                            #    Ref[source][target] = Ref[source][target] +1
                             if TrustConfig.pretrust_strategy and i < TrustConfig.l_cascade_agreements and target not in range(ProviderConfig.n_providers + ProviderConfig.n_intermidiaries - ProviderConfig.n_fraudsters, ProviderConfig.n_providers + ProviderConfig.n_intermidiaries) and matrix[source][target][1]>0:  
                                 #M[source][target][1] = M[source][target][1] -  1.0 / (i+2)
                                 matrix[source,target,1] = matrix[source,target,1] -  1.0 / (i+2)
-                            if TrustConfig.symmetry_strategy and matrix[target][source][1]>=1:  
+                            if TrustConfig.simmetry_strategy and matrix[target][source][1]>=1:  
                                 #M[source][target][1] = M[source][target][1] - 1
                                 #M[target][source][1] = M[target][source][1] - 1
                                 matrix[source,target,1] = matrix[source,target,1] -  1
@@ -186,6 +161,7 @@ class TrustManager:
 
         fx.flush()
         fx.close()
+
 
         fr = h5py.File('data.hdf5', 'r')
         matrixy = fr['bigM'][:]
@@ -204,8 +180,13 @@ class TrustManager:
             Tscore[j] = (1.0+pos)/(2.0+pos+neg)
 
         fr.close()
+
+        ## ?? non funge..
         with h5py.File("data.hdf5","a") as f:
             del f['bigM']
+
+
+
 
         print("calc threshold")
         numeratore = 0
