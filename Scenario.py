@@ -22,8 +22,7 @@ class Scenario:
 
    def createCsv(self, fileName):
       f = open(fileName,'w')
-      #header = 'id, fraud, origin, termin, transit1, transit2, transit3, transit4'
-      #f.write(header+'\n')
+      
       for i in range(0,self.n_calls):
          Tools.printProgress( i, self.n_calls)
 

@@ -3,6 +3,7 @@ import os
 import csv
 from TrustMan import *
 from config import Tools
+from EigenTrust import *
 
 def main():
 
@@ -32,6 +33,8 @@ def main():
 	provider_participation=args.pcoop
 	intermidiaries_participation=args.icoop
 
+	N=int(n_providers)+int(n_intermidiaries)
+
 
 	print('simulation: ' + args.scenario)
 	print('scenario: ' + str(n_providers) + ' providers,  ' + str(n_intermidiaries) + ' intermidiaries,  ' + str(fraudsters_percentage) + '[%] fradusters')
@@ -40,14 +43,17 @@ def main():
 
 
 
-	if os.path.isfile('matrix.hdf5'):
-		os.remove('matrix.hdf5')
+	if os.path.isfile(scenario_directory+'/dataset.hdf5'):
+		os.remove(scenario_directory+'/dataset.hdf5')
 
 	manager = TrustMan(providers=n_providers, intermidiaries=n_intermidiaries, fraudsters_percentage=fraudsters_percentage, l_chain=l_chain,
 		calls=n_calls, frauds_percentage=frauds_percentage, provider_participation=provider_participation, intermidiaries_participation=intermidiaries_participation)
 
-	manager.updateMatrix(trace_file)
+	manager.updateMatrix(scenario_directory)
 
+	trust = EigenTrust(int(n_providers), int(n_intermidiaries), int(provider_participation), int(intermidiaries_participation))
+	
+	trust.computeTrust(scenario_directory)
 
 
 
