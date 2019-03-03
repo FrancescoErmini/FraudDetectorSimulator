@@ -5,55 +5,47 @@ import logging
    
 class EigenTrust():
 
-	n_providers = 0
-	n_intermidiaries = 0
-	provider_participation = 0
-	intermidiaries_participation = 0
 
-	def __init__(self, n_providers, n_intermidiaries, provider_participation, intermidiaries_participation):
+
+	def __init__(self, scenario):
 		super(EigenTrust, self).__init__()
-		self.n_providers = n_providers
-		self.n_intermidiaries = n_intermidiaries
-		self.provider_participation = provider_participation
-		self.intermidiaries_participation = intermidiaries_participation
+		self.scenario = scenario
+		
 
 
 
 
-	def computeTrust(self, dataset_path):
+	def computeTrust(self, infile, outfile):
 
-		logging.basicConfig(filename=dataset_path+'/rawresult.log',level=logging.DEBUG)
+		logging.basicConfig(filename=outfile,level=logging.DEBUG)
 
-		iterMax = 10
+		iterMax = 8
 
-		booo = False
+		preTrust_strategy = False
 
-		N = self.n_providers + self.n_intermidiaries
+		N = self.scenario.n_providers + self.scenario.n_intermidiaries
+
+
+		n_pretrust = self.scenario.n_providers*self.scenario.provider_participation//100 + self.scenario.n_intermidiaries*self.scenario.intermidiaries_participation//100
 
 		
 		print("Create preTrust array")
-		preTrust = np.empty(N) #[0 for i in range(N)]
-		preTrust.fill((1.0/N))
-		if booo:
-			n_trust1 = self.n_providers*self.provider_participation//100
-			n_trust2 = self.n_intermidiaries*self.intermidiaries_participation//100
-			n_pretrust = int(n_trust1) + int(n_trust2)
 
+		preTrust = np.empty(N)
+
+		if N==n_pretrust or not preTrust_strategy:
+			preTrust.fill((1.0/N))
+		
+		else:
 			for i in range(N):
-				if i < n_trust1 and n_pretrust<N:
-					preTrust[i] = 1.0/n_pretrust
-				if i < int(self.n_providers+n_trust2) and i > int(self.n_providers):
+				if self.isPreTrust(i):
 					preTrust[i] = 1.0/n_pretrust
 				else:
 					preTrust[i] = 0.0
 
-		print(preTrust)
-		#with h5py.File(dataset_path+"/dataset.hdf5", "a") as f:
-			#f.create_dataset("fback_matrix", data=a)
-			#f.create_dataset("normal_matrix", shape=(N,N))
 		print("Create normalized matrix")
 
-		dataset = h5py.File(dataset_path+'/dataset.hdf5', 'a')
+		dataset = h5py.File(infile, 'a')
 		
 		for j in range(N):
 
@@ -106,12 +98,14 @@ class EigenTrust():
 				for j in range(N):
 					res+=(row[j]*t[j])
 				#computo il trust secondo eigenTrust
-				#t[i] =  res
-				t[i] = 0.5 * res +  0.5 * preTrust[i]
-
-				logging.debug('ITER: '+str(iteration)+' USER: '+str(i)+' REP: '+str(t[i]))
+				t[i] =  res
+				#t[i] = 0.5 * res +  0.5 * preTrust[i]
 		
 				iteration += 1
+
+		for i in range(N):
+				logging.debug('USER: '+str(i)+' REP: '+str(t[i]))
+
 
 				
 		#print(t.tolist())
@@ -127,7 +121,7 @@ class EigenTrust():
 		if threshold < 0:
 			threshold = 0
 
-		for i in range(N):
+		for i in range(self.scenario.n_providers, N):
 			if t[i] <= threshold:
 				bad += 1
 			else:
@@ -157,8 +151,22 @@ class EigenTrust():
 
 		print(t)
 		'''
+
+	def isPreTrust(self, index):
+		
+		if index in range(0, self.scenario.n_providers*self.scenario.provider_participation//100):
+			return True
+
+		if index in range(self.scenario.n_providers, self.scenario.n_providers + self.scenario.n_intermidiaries*self.scenario.intermidiaries_participation//100) and not self.scenario.isFraudster(index):
+			return True
+		
+		else:
+			return False
+
+	'''
 	def calcMul(m_row, vect, N):
 		res=0
 		for j in range(N):
 			res+=(m_row[j]*vect[j])
 		return res
+	'''
