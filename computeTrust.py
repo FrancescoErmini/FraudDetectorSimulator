@@ -5,6 +5,7 @@ from TrustMan import *
 from config import Tools
 from EigenTrust import *
 from Scenario import Scenario
+from TNSLA import *
 
 def main():
 
@@ -68,8 +69,8 @@ def main():
 
 	manager.updateMatrix(infile=trace_file, outfile=matrix_file, logfile=posneg_file)
 
-	trust = EigenTrust(scenario=scenario)
-	
+	#trust = EigenTrust(scenario=scenario)
+	trust = TNSLA(scenario=scenario)
 	trust.computeTrust(infile=matrix_file, outfile=debug_file)
 
 
