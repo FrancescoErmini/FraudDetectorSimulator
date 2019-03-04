@@ -22,6 +22,7 @@ def main():
 	matrix_file = scenario_directory + '/dataset.hdf5'
 	debug_file = scenario_directory+'/rawresult.log'
 	posneg_file = scenario_directory+'/rowfback.log'
+	results_file = scenario_directory+'/results.csv'
 
 	
 	with open(log_file, 'r') as f:
@@ -71,7 +72,7 @@ def main():
 
 	#trust = EigenTrust(scenario=scenario)
 	trust = TNSLA(scenario=scenario)
-	trust.computeTrust(infile=matrix_file, outfile=debug_file)
+	trust.computeTrust(infile=matrix_file, outfile=results_file)
 
 
 

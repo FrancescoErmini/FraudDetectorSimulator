@@ -17,7 +17,7 @@ class EigenTrust():
 
 	def computeTrust(self, infile, outfile):
 
-		logging.basicConfig(filename=outfile,level=logging.DEBUG)
+		#logging.basicConfig(filename=outfile,level=logging.DEBUG)
 
 		iterMax = 8
 
@@ -84,7 +84,7 @@ class EigenTrust():
 
 
 		print("Calcolo la reputazione")
-		t = preTrust
+		trust = preTrust
 		iteration = 0
 
 		while iteration < iterMax:
@@ -96,24 +96,29 @@ class EigenTrust():
 				#moltiplico vettore colonna della matrice normalizzata con vettore t
 				res=0
 				for j in range(N):
-					res+=(row[j]*t[j])
+					res+=(row[j]*trust[j])
 				#computo il trust secondo eigenTrust
-				t[i] =  res
+				trust[i] =  res
 				#t[i] = 0.5 * res +  0.5 * preTrust[i]
-		
+				
 				iteration += 1
 
-		for i in range(N):
-				logging.debug('USER: '+str(i)+' REP: '+str(t[i]))
+		dataset['trust_score'] = np.expand_dims(trust,1)
+
+		
+
+		#for i in range(N):
+		#		logging.debug('USER: '+str(i)+' REP: '+str(t[i]))
 
 
 				
 		#print(t.tolist())
 
-
+		"""
 		good = 0
 		bad = 0
 
+		## nel vettore non va considerato la prima parte
 		mean = np.mean(t)
 		std = np.std(t)
 
@@ -127,8 +132,6 @@ class EigenTrust():
 			else:
 				good += 1
 
-
-
 		print("goolde")
 		print(good)
 
@@ -137,21 +140,9 @@ class EigenTrust():
 
 		print("calc threshold:")
 		print(threshold)
+		"""
 
 		
-		'''
-			for i in range(N):
-				#carico in memoria riga i della matrice normalizzata
-				row = dataset['normal_matrix'][i:i+1,::]
-				#moltiplico vettore colonna della matrice normalizzata con vettore t
-				t = np.dot(row,t)
-				#computo il trust secondo eigenTrust
-				t[i] = 0.5 * t[i] +  0.5 * preTrust[i]
-				iteration += 1
-
-		print(t)
-		'''
-
 	def isPreTrust(self, index):
 		
 		if index in range(0, self.scenario.n_providers*self.scenario.provider_participation//100):
@@ -162,11 +153,3 @@ class EigenTrust():
 		
 		else:
 			return False
-
-	'''
-	def calcMul(m_row, vect, N):
-		res=0
-		for j in range(N):
-			res+=(m_row[j]*vect[j])
-		return res
-	'''

@@ -6,22 +6,6 @@ class TraceGenerator:
    def __init__(self, scenario):
       super(TraceGenerator, self).__init__()
       self.scenario = scenario
-      '''
-      self.scenario.n_providers = n_providers
-      self.scenario.n_intermidiaries = n_intermidiaries 
-      self.fraudsters_percentage= fraudsters_percentage
-      self.scenario.n_calls = n_calls
-      self.frauds_percentage = frauds_percentage
-      self.scenario.l_chain=l_chain
-      self.provider_participation = provider_participation
-      self.intermidiaries_participation = intermidiaries_participation
-
-      self.scenario.n_fraudsters = n_intermidiaries * fraudsters_percentage // 100
-      self.scenario.n_calls_fraud = n_calls * frauds_percentage // 100
-      self.n_coop_providers = provider_participation*n_providers//100
-      self.n_coop_intermidiaries = intermidiaries_participation*(n_intermidiaries-self.scenario.n_fraudsters)//100
-      self.n_honests = self.scenario.n_intermidiaries - self.scenario.n_fraudsters
-      '''
 
    def createCsv(self, fileName):
       f = open(fileName,'w')
