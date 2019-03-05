@@ -1,134 +1,82 @@
+import numpy as np
+import h5py
+import csv
+from config import *
+
 class Result:
 
-		print("calc threshold:")
-		numeratore = 0
-		denominatore = 0
-		for i in range(self.scenario.n_intermidiaries):
-			numeratore += self.scenario.Tscore[i] #*weights[i]
-		denominatore =  self.scenario.n_intermidiaries #denominatore + weights[i]
-		average = numeratore / denominatore
-		x=0
-		cnt = 0
-		for  i in range(self.scenario.n_intermidiaries):
-			#if Tscore[i+ProviderConfig.n_providers] > 0.5:
-			cnt = cnt + 1
-			x = x+(self.scenario.Tscore[i] - average)**2
-		x = x / cnt
-		standarddev = math.sqrt(x)
-		threshold = average - standarddev #99%=2,58 95%=1.96
-		print(threshold)
-		if threshold < 0.5:
-			threshold = 0.5
 
 
-		print("compare threshold")
-		for i in range(self.scenario.n_intermidiaries):
+	def __init__(self, scenario, manager):
+		super(Result, self).__init__()
+		self.scenario = scenario
+		self.manager = manager
+
+
+
+
+
+	def printRes(self):
+
+		print("SIM CONFIG")
+		print("calls: "+ str(self.scenario.n_calls))
+		print("fraud calls: " + str(self.scenario.n_calls_fraud))
+		print("coop. providers: " + str(self.scenario.n_coop_providers)+"/"+str(self.scenario.n_providers))
+		print("coop. intermidiaries: " + str(self.scenario.n_coop_intermidiaries)+"/"+str(self.scenario.n_intermidiaries))
+
+		print("simmetry strategy: " + str(TrustConfig.simmetry_strategy))
+		print("pretrust strategy: " + str(TrustConfig.pretrust_strategy) + " with " + str(TrustConfig.l_cascade_agreements)+"/"+str(self.scenario.l_chain))
+		print("fraudster behaviour: " + str(self.manager.fraudBehaviour))
+
+
+
+
+		print("\nRAW RESULT ON FRAUDSTERS: ")
+		print(str(self.manager.fraudsters)+ "/" + str(self.scenario.n_fraudsters)+ " fraudsters detected  ")
+		print(str(self.manager.suspected_fraudsters)+ "/" + str(self.scenario.n_fraudsters) +" fraudsters suspected,  ")
+		print(str(self.manager.suspected_falsenegative)+ "/" + str(self.scenario.n_fraudsters)+ " suspected  false negative,   ")
+		print(str(self.manager.falsenegative)+ "/" + str(self.scenario.n_fraudsters)+ " false negative,   ")
+		print(str(self.manager.unknown_fraudsters)   + "/" + str(self.scenario.n_fraudsters)+   " unknown fraudsters  ")
+		print("\nRAW RESULT ON honests: ")
+		print(str(self.manager.honests) + "/" + str(self.scenario.n_honests) + " honests,  ")
+		print(str(self.manager.suspected_honests) + "/" + str(self.scenario.n_honests) + " suspected honests,  ")
+		print(str(self.manager.suspected_falsepositive) + "/" + str(self.scenario.n_honests) + " suspected false positives,  ")			
+		print(str(self.manager.falsepositive) + "/" + str(self.scenario.n_honests) + " false positives,  ")
+		print(str(self.manager.unknown_honests)+ "/" + str(self.scenario.n_honests) + " unknown honests.  ")
+
+
+		print("\nSTAT RESULT:")
+
+		print("frauds detected: " + str(self.manager.fraudsAnalyzed))
+		print("accusations analized: " + str(self.manager.accusationsAnalyzed))
+
+		print("fraudsters_detection: " + str(self.manager.fraudsters_detection))
+		print("fraudsters_detection_error: " + str(self.manager.fraudsters_detection_error))
+		print("fraudsters_detection_missing: " + str(self.manager.fraudsters_detection_missing))
+		print("honests detected error: " + str(self.manager.honests_detection_error))
+
+	def storeRes(self, outfile):
+
+		with open(outfile, "w") as text_file:
+				print(f"fraudsters detected: {self.manager.fraudsters_detection}", file=text_file)
+				print(f"fraudsters detected error: {self.manager.fraudsters_detection_error}", file=text_file)
+				print(f"fraudsters detected missing: {self.manager.fraudsters_detection_missing}", file=text_file)
+				print(f"honests detected error: {self.manager.honests_detection_error}", file=text_file)
+
+
+
+
+	def printRawTrustVector(self):
+		dataset = h5py.File(self.scenario.dataset, 'a')
+		res = dataset['trust_score'][:]
+		print(res[self.scenario.n_providers:self.scenario.N,0])
+
+	def store2Csv(self, file):
+		dataset = h5py.File(self.scenario.dataset, 'a')
+		trust_scores = dataset['trust_score'][:]
+		with open(file, mode='w') as info:
+			writer = csv.writer(info, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+			writer.writerow(["id", "trust_score"])
+			for i in range(self.scenario.n_providers,self.scenario.n_providers + self.scenario.n_intermidiaries):
+				writer.writerow([i, trust_scores[i][0]])
 		
-			if self.scenario.isFraudster(i+self.scenario.n_providers):
-				if self.scenario.Tscore[i] < 0.5:
-					#print("fraudster is: " + str(i+self.scenario.n_providers) + " with score values: " +  str(Tscore[i]) +"<"+str(threshold))
-					self.scenario.fraudsters += 1
-
-				if self.scenario.Tscore[i] > 0.5 and self.scenario.Tscore[i] < 0.9 and self.scenario.Tscore[i] < threshold:
-
-					self.scenario.suspected_fraudsters += 1
-
-				if self.scenario.Tscore[i] > 0.5 and self.scenario.Tscore[i] < 0.9 and self.scenario.Tscore[i] > threshold:
-					
-					self.scenario.suspected_falsenegative += 1
-
-				if self.scenario.Tscore[i] >= 0.9:
-
-					self.scenario.falsenegative += 1
-
-				if self.scenario.Tscore[i] == 0.5:
-
-					self.scenario.unknown_fraudsters += 1
-			else:
-
-				if self.scenario.Tscore[i] >= 0.9:
-
-					self.scenario.honests += 1
-
-				if self.scenario.Tscore[i] < 0.9 and self.scenario.Tscore[i] > 0.5 and self.scenario.Tscore[i] > threshold:
-					
-					self.scenario.suspected_honests += 1
-
-				if self.scenario.Tscore[i] < 0.9 and self.scenario.Tscore[i] > 0.5 and self.scenario.Tscore[i] < threshold:
-
-					self.scenario.suspected_falsepositive += 1
-
-				if self.scenario.Tscore[i] < 0.5:
-
-					self.scenario.falsepositive += 1
-
-				if self.scenario.Tscore[i] == 0.5:
-
-					self.scenario.unknown_honests += 1
-
-
-
-
-		print("DEBUG disguised calls: " + str(self.scenario.disguised_behaviour))
-		print("DEBUG malicious calls: " + str(self.scenario.malicious_behaviour))
-
-
-
-		print("\nRESULT ON FRAUD DETECTION:  " + str(self.scenario.accusations_counter) +"/"+ str(self.scenario.accusations_counter_ref) + " accusations deficit" )
-
-		print("\nRESULT ON FRAUDSTERS DETECTION: ")
-		print(str(self.scenario.fraudsters)+ "/" + str(self.scenario.n_fraudsters)+ " fraudsters detected  ")
-		print(str(self.scenario.suspected_fraudsters)+ "/" + str(self.scenario.n_fraudsters) +" fraudsters suspected,  ")
-		print(str(self.scenario.suspected_falsenegative)+ "/" + str(self.scenario.n_fraudsters)+ " suspected  false negative,   ")
-		print(str(self.scenario.falsenegative)+ "/" + str(self.scenario.n_fraudsters)+ " false negative,   ")
-		print(str(self.scenario.unknown_fraudsters)   + "/" + str(self.scenario.n_fraudsters)+   " unknown fraudsters  ")
-		print("\nRESULT ON DETECTION ERRORS: ")
-		print(str(self.scenario.honests) + "/" + str(self.scenario.n_honests) + " honests,  ")
-		print(str(self.scenario.suspected_honests) + "/" + str(self.scenario.n_honests) + " suspected honests,  ")
-		print(str(self.scenario.suspected_falsepositive) + "/" + str(self.scenario.n_honests) + " suspected false positives,  ")			
-		print(str(self.scenario.falsepositive) + "/" + str(self.scenario.n_honests) + " false positives,  ")
-		print(str(self.scenario.unknown_honests)+ "/" + str(self.scenario.n_honests) + " unknown honests.  ")
-
-		fx.flush()
-		fx.close()
-
-
-
-
-
-
-		
-
-
-		"""
-
-	'''
-	def measure_fraudsters_behaviour(self, trace):
-		for i in range(self.scenario.l_chain):
-			ind=int(trace[Csv.TRANSIT+i])
-			if self.scenario.isFraudster(ind):
-				if not self.scenario.isFraud(int(trace[Csv.FRAUD])):
-					self.disguised_behaviour += 1 #le transazioni buone fatte da un frodatre nel campione
-				else:
-					self.malicious_behaviour += 1 #le transazioni maligne fatte da un frodatre nel campione
-	'''
-	'''
-	@staticmethod       
-	def calcRevenue():
-		r_bypass = TraceConfig.bypass_revenue*TraceConfig.average_call_duration
-		#r_bypass = FraudType.bypass_revenue * trace["durationA"]
-		r_fas = TraceConfig.fas_duration*TraceConfig.tariff_international 
-		r_lrn = TraceConfig.lrn_revenue * TraceConfig.average_call_duration
-		r = 0
-
-		if TraceConfig.fas_fraud:
-		    r = r_fas
-		if TraceConfig.bypass_fraud:
-		    r = r_bypass
-		if TraceConfig.bypass_fraud and TraceConfig.fas_fraud:
-		    r = r_bypass + r_fas
-		if TraceConfig.lrn_fraud:
-		    r = r_lrn
-		return r
-	'''
-

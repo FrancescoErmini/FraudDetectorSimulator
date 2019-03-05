@@ -1,6 +1,6 @@
 import numpy as np
 import h5py
-import logging
+from config import Tools
 
    
 class EigenTrust():
@@ -12,12 +12,7 @@ class EigenTrust():
 		self.scenario = scenario
 		
 
-
-
-
-	def computeTrust(self, infile, outfile):
-
-		#logging.basicConfig(filename=outfile,level=logging.DEBUG)
+	def computeTrust(self, data_in, data_out):
 
 		iterMax = 8
 
@@ -43,14 +38,16 @@ class EigenTrust():
 				else:
 					preTrust[i] = 0.0
 
-		print("Create normalized matrix")
+		print("Create normalized matrix from feedback matrix")
 
-		dataset = h5py.File(infile, 'a')
+		dataset = h5py.File(self.scenario.dataset, 'a')
 		
 		for j in range(N):
 
+			Tools.printProgress( j, N)
+
 			#carico in memoria la colonna j della matrice dei feedback
-			fback_matrix_chunk =  dataset['fback_matrix'][::,j:j+1]
+			fback_matrix_chunk =  dataset[data_in][::,j:j+1]
 			#print("DEBUG")
 			#print(fback_matrix_chunk)
 			#calcolo la somma delle differenze (pos-neg) lungo la colonna j
@@ -83,11 +80,13 @@ class EigenTrust():
 		
 
 
-		print("Calcolo la reputazione")
+		print("Compute trust score  from normalized matrix with eigenTrust")
 		trust = preTrust
 		iteration = 0
 
 		while iteration < iterMax:
+
+			Tools.printProgress( iteration, iterMax)
 
 			for i in range(N):
 				#carico in memoria riga i della matrice normalizzata
@@ -104,43 +103,6 @@ class EigenTrust():
 				iteration += 1
 
 		dataset['trust_score'] = np.expand_dims(trust,1)
-
-		
-
-		#for i in range(N):
-		#		logging.debug('USER: '+str(i)+' REP: '+str(t[i]))
-
-
-				
-		#print(t.tolist())
-
-		"""
-		good = 0
-		bad = 0
-
-		## nel vettore non va considerato la prima parte
-		mean = np.mean(t)
-		std = np.std(t)
-
-		threshold = mean - std
-		if threshold < 0:
-			threshold = 0
-
-		for i in range(self.scenario.n_providers, N):
-			if t[i] <= threshold:
-				bad += 1
-			else:
-				good += 1
-
-		print("goolde")
-		print(good)
-
-		print("bad")
-		print(bad)
-
-		print("calc threshold:")
-		print(threshold)
-		"""
 
 		
 	def isPreTrust(self, index):

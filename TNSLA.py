@@ -1,6 +1,7 @@
 import numpy as np
 import h5py
-import logging
+from config import Tools
+
 
    
 class TNSLA():
@@ -17,26 +18,24 @@ class TNSLA():
 		self.scenario = scenario
 		
 
-
-
-
-	def computeTrust(self, infile, outfile):
-
-		logging.basicConfig(filename=outfile,level=logging.DEBUG)
+	def computeTrust(self, data_in, data_out):
 
 		
 		N = self.scenario.n_providers + self.scenario.n_intermidiaries
 
 
-		dataset = h5py.File(infile, 'a')
+		dataset = h5py.File(self.scenario.dataset, 'a')
 
 		trust = np.zeros((N,4))
+
+		print("Compue trust scores from feedback matrix with TNSLA")
 		
 		for j in range(N):
 
+			Tools.printProgress( j, N)
+
 			#carico in memoria la colonna j della matrice dei feedback
-			fback_matrix_chunk =  dataset['fback_matrix'][::,j:j+1]
-			#print(fback_matrix_chunk)
+			fback_matrix_chunk =  dataset[data_in][::,j:j+1]
 			
 			tmp = np.zeros((N,4))
 			
@@ -52,17 +51,9 @@ class TNSLA():
 			for k in range(N-1):
 				op = self.aggregate(op, tmp[k+1])
 			trust[j] = op
-			logging.info("OPINION: id=" + str(j) + " belief=" + str(trust[j][TNSLA.b]) + ", disbelief=" + str(trust[j][TNSLA.d]) + ", uncertainty=" + str(trust[j][TNSLA.u]) + ", baserate=" + str(trust[j][TNSLA.a]) )
-			logging.info("TRUST: id="+ str(j) + " expeceted value is " + str( trust[j][TNSLA.b]+(trust[j][TNSLA.a]*trust[j][TNSLA.u])))
 
-		#print(trust)
-
-
-		#	dataset['opinion_matrix'][::,j:j+1] = np.expand_dims(tmp,1)	
-		#	print(dataset['opinion_matrix'][::,j:j+1])
-		
-		#print("end debug")
-		#print(dataset['opinion_matrix'][:])
+			trustValue = trust[j][TNSLA.b]+(trust[j][TNSLA.a]*trust[j][TNSLA.u])
+			dataset[data_out][j] = trustValue
 
 
 	def edit(self, pos, neg):

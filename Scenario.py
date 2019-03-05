@@ -16,7 +16,7 @@ class Scenario:
    n_honests = 0
 
 
-   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation):
+   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation, dataset):
       super(Scenario, self).__init__()
       self.n_providers = n_providers
       self.n_intermidiaries = n_intermidiaries 
@@ -32,8 +32,12 @@ class Scenario:
       self.n_coop_providers = provider_participation*n_providers//100
       self.n_coop_intermidiaries = intermidiaries_participation*(n_intermidiaries-self.n_fraudsters)//100
       self.n_honests = self.n_intermidiaries - self.n_fraudsters
+      self.N = n_providers + n_intermidiaries
+      self.dataset = dataset
 
-   
+
+
+
    def isFraudster(self, index):
 
       ind = int(index)
@@ -57,10 +61,10 @@ class Scenario:
    def isCoopProvider(self, index):
 
       ind = int(index)
-      low = int(self.n_providers/2-self.n_coop_providers/2)
-      up =  int(self.n_providers/2 + self.n_coop_providers/2)
+      low = int(self.n_providers/2) - int(self.n_coop_providers/2)
+      up =  int(self.n_providers/2) + int(self.n_coop_providers/2)
       
-      if ind in range(low,up):
+      if ind in range(low,up+1):
          return True
       else:
          return False
@@ -71,7 +75,7 @@ class Scenario:
       low = self.n_providers+int((self.n_intermidiaries-self.n_fraudsters)/2)-int(self.n_coop_intermidiaries/2)
       up =  self.n_providers+int((self.n_intermidiaries-self.n_fraudsters)/2)+int(self.n_coop_intermidiaries/2)
 
-      if ind in range(low,up):
+      if ind in range(low,up+1):
          return True
       else:
          return False

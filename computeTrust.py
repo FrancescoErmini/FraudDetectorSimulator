@@ -6,23 +6,27 @@ from config import Tools
 from EigenTrust import *
 from Scenario import Scenario
 from TNSLA import *
+from Result import *
 
 def main():
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--scenario', help="Trace file source directory for the simulation")
-	#parser.add_argument('--pcoop', type=int, help="Providers cooperation percentage within the trust framework")
+	#parser.add_argument('--trustalg', help="Name of trace algoritm EigenTrust or TNSLA")
 	#parser.add_argument('--icoop', type=int, help="Intermidiaries cooperation within the trust framework")
 
 	args = parser.parse_args()
 
 	scenario_directory = 'traces/'+args.scenario
-	log_file = scenario_directory + '/INFO.csv'
+	dataset = scenario_directory + '/dataset.hdf5'
 	trace_file = scenario_directory + '/traces.csv'
-	matrix_file = scenario_directory + '/dataset.hdf5'
-	debug_file = scenario_directory+'/rawresult.log'
-	posneg_file = scenario_directory+'/rowfback.log'
-	results_file = scenario_directory+'/results.csv'
+
+
+
+	log_file = scenario_directory + '/INFO.csv'
+	#debug_file = scenario_directory+'/rawresult.log'
+	#posneg_file = scenario_directory+'/rowfback.log'
+	result_file = scenario_directory+'/result.txt'
 
 	
 	with open(log_file, 'r') as f:
@@ -44,14 +48,25 @@ def main():
 	N=n_providers+n_intermidiaries
 
 
+	if os.path.isfile(dataset):
+		os.remove(dataset)
+
+
+	with h5py.File(dataset, "a") as f:
+		f.create_dataset("fback_matrix", shape=(N,N,2), dtype='uint16')
+		f.create_dataset("normal_matrix", shape=(N,N), dtype='uint16')
+		f.create_dataset("opinion_matrix", shape=(N,N,4), dtype='uint16')
+		f.create_dataset("trust_score", shape=(N,1))
+
+
+
+
 	print('simulation: ' + args.scenario)
+	#print('trust alg: ' + args.trustalg)
 	print('scenario: ' + str(n_providers) + ' providers,  ' + str(n_intermidiaries) + ' intermidiaries,  ' + str(fraudsters_percentage) + '[%] fradusters')
 	print('transactions: ' + str(n_calls) + ' calls,  ' + str(frauds_percentage) + '[%]  call frauds,  ' + str(l_chain) + ' chain length')
 	print('cooperation: ' + str(provider_participation) + '[%] providers,  ' + str(intermidiaries_participation) + '[%] intermidiaries')
 
-
-	if os.path.isfile(matrix_file):
-		os.remove(matrix_file)
 
 
 
@@ -63,16 +78,28 @@ def main():
 		frauds_percentage=frauds_percentage,
 		l_chain =l_chain,
 		provider_participation=provider_participation,
-		intermidiaries_participation=intermidiaries_participation)
+		intermidiaries_participation=intermidiaries_participation,
+		dataset=dataset)
 
 
 	manager = TrustMan(scenario=scenario)
 
-	manager.updateMatrix(infile=trace_file, outfile=matrix_file, logfile=posneg_file)
+	manager.updateMatrix(infile=trace_file, data_out='fback_matrix')
+	
 
-	#trust = EigenTrust(scenario=scenario)
+	#if args.trustalg == "EigenTrust":
+	#	trust = EigenTrust(scenario=scenario)
+	#else:
 	trust = TNSLA(scenario=scenario)
-	trust.computeTrust(infile=matrix_file, outfile=results_file)
+
+	trust.computeTrust(data_in='fback_matrix', data_out='trust_score')
+
+	manager.fraudsterClassifier(data_in='trust_score', outfile=result_file)
+
+
+	results = Result(scenario=scenario, manager=manager)
+	results.store2Csv(scenario_directory+'/trust_score.csv')
+	results.printRes()
 
 
 

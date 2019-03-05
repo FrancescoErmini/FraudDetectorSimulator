@@ -35,6 +35,7 @@ def main():
    home = expanduser('~')
    #sim_path = home + '/Documents/tesi/mysimulator2/FraudDetectorSimulator/traces/' + simulation_directory
    sim_path = 'traces/' + simulation_directory
+   dataset = sim_path +  '/dataset.hdf5'
 
    if not os.path.exists(sim_path):
       print ("create dir: traces/"+simulation_directory+"/")
@@ -48,7 +49,8 @@ def main():
       fraudsters_percentage=int(args.fraudsters), 
       frauds_percentage=int(args.frauds),
       provider_participation = int(args.pcoop),
-      intermidiaries_participation = int(args.icoop))
+      intermidiaries_participation = int(args.icoop),
+      dataset = dataset)
 
    traceGen = TraceGenerator(scenario=scenario)
 
@@ -58,9 +60,9 @@ def main():
       os.remove(sim_path+'/INFO.csv')
 
    with open(sim_path+'/INFO.csv', mode='w') as info:
-      employee_writer = csv.writer(info, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-      employee_writer.writerow(["providers", "intermidiaries","fraudsterspercentage", "l_chain","calls","fraudspercentage", "n_coop_providers", "n_coop_intermidiaries"])
-      employee_writer.writerow([scenario.n_providers, scenario.n_intermidiaries, scenario.fraudsters_percentage, TraceConfig.providers_per_call, scenario.n_calls, scenario.frauds_percentage, scenario.provider_participation, scenario.intermidiaries_participation
+      writer = csv.writer(info, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+      writer.writerow(["providers", "intermidiaries","fraudsterspercentage", "l_chain","calls","fraudspercentage", "n_coop_providers", "n_coop_intermidiaries", "fraudster_camuflage", "simmetry_strategy", "pretrust_strategy"])
+      writer.writerow([scenario.n_providers, scenario.n_intermidiaries, scenario.fraudsters_percentage, scenario.l_chain, scenario.n_calls, scenario.frauds_percentage, scenario.provider_participation, scenario.intermidiaries_participation, TrustConfig.fraudsters_camouflage, TrustConfig.simmetry_strategy, TrustConfig.pretrust_strategy
          ])
       
 

@@ -85,15 +85,15 @@ class TraceGenerator:
 
    def generateNodesChain(self, fraud):
       l_chain = self.scenario.l_chain
-      if TraceConfig.fraudsters_response_strategy != 3 and fraud==True:
-         l_chain = 2
+      #if TraceConfig.fraudsters_response_strategy != 3 and fraud==True:
+      #   l_chain = 2
 
       firstnode = 0
       nodes = []
       lastnode = 0
 
       #sia nodi onesti che nodi fraudolenti instradano chiamate oneste
-      if fraud==False and TraceConfig.fraudsters_camouflage == True: 
+      if fraud==False and TrustConfig.fraudsters_camouflage == True: 
          #first node
          firstnode=random.randint(self.scenario.n_providers, self.scenario.n_providers + self.scenario.n_intermidiaries -1)
          nodes.append(firstnode)
@@ -108,7 +108,7 @@ class TraceGenerator:
          nodes.append(lastnode)
 
       #solo nodi onesti instradano chiamate oneste
-      if fraud==False and TraceConfig.fraudsters_camouflage == False: 
+      if fraud==False and TrustConfig.fraudsters_camouflage == False: 
          firstnode=random.randint(self.scenario.n_providers, self.scenario.n_providers + self.scenario.n_intermidiaries - self.scenario.n_fraudsters -1)
          nodes.append(firstnode)
          count = 1
@@ -138,6 +138,8 @@ class TraceGenerator:
       return nodes
 
    def duplicateNodeInGroup(self, nodes, node):
+      return False
+      """
       if TrustConfig.clustering_strategy == False:
          return False
       found = False
@@ -146,3 +148,4 @@ class TraceGenerator:
          if (n/TraceConfig.n_cluster_size) == (node/TraceConfig.n_cluster_size):
             found = True
       return found
+      """
