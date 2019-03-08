@@ -22,9 +22,11 @@ from config import *
 
 class TrustMan(object):
 
-	def __init__(self, scenario):
+	def __init__(self, scenario, dataset):
 		super(TrustMan, self).__init__()
 
+		self.scenario = scenario
+		self.dataset = dataset
 
 		self.disguised_behaviour = 0
 		self.malicious_behaviour = 0
@@ -45,19 +47,28 @@ class TrustMan(object):
 		self.falsepositive = 0
 		self.unknown_honests = 0
 
-		self.scenario = scenario
+		
 		self.fraudBehaviour = 0
 		self.accusationsAnalyzed = 0
 		self.fraudsAnalyzed = 0
 
 		self.fraudsters_detection = 0
+		self.fraudsters_detection_suspect = 0
 		self.fraudsters_detection_error = 0
 		self.fraudsters_detection_missing = 0
+
+		self.honests_detection = 0
+		self.honests_detection_suspect = 0
 		self.honests_detection_error  = 0
+		self.honests_detection_missing = 0
+
+		self.threshold = 0
 
 
 
-	def updateMatrix(self, infile, data_out):
+
+
+	def createFeedbackMatrix(self, infile):
 
 		
 		#logging.basicConfig(filename=logfile,level=logging.DEBUG)
@@ -75,8 +86,8 @@ class TrustMan(object):
 			f.create_dataset("trust_score", shape=(N,1))
 		"""
 
-		fx = h5py.File(self.scenario.dataset, 'a')
-		matrix = fx[data_out]
+		fx = h5py.File(self.dataset.dataset, 'a')
+		matrix = fx['fback_matrix']
 
 
 		count=0
@@ -91,6 +102,8 @@ class TrustMan(object):
 		with open(infile, 'r') as src:
 			reader = csv.reader(src)
 			traces = list(reader)
+
+		print("\nParse call traces and create the feedback matrix.")
 
 		for trace in traces:
 
@@ -163,14 +176,54 @@ class TrustMan(object):
 								#M[source][target][1] = M[source][target][1] -  1.0 / (i+2)
 								matrix[source,target,NEG] = matrix[source,target,NEG] -  1.0 / (i+2)
 						
-		print("Matrix updated..")
+		
 
 
-		self.fraudBehaviour = 100*self.malicious_behaviour/(self.malicious_behaviour+self.disguised_behaviour)
-		self.accusationsAnalyzed = (100*self.accusations_counter)/self.accusations_counter_ref #tasso di risposta per nodi transizione nel campione
-		self.fraudsAnalyzed = (100*self.frauds_detector_counter)/self.frauds_detector_counter_ref #tasso di frodi conosciute (rilevate) nel campione
+		self.fraudBehaviour = 100.0*self.malicious_behaviour/(self.malicious_behaviour+self.disguised_behaviour)
+		try:
+			self.accusationsAnalyzed = int(100.0*self.accusations_counter/self.accusations_counter_ref) #tasso di risposta per nodi transizione nel campione
+		except ZeroDivisionError:
+			self.accusationsAnalyzed = 0
+		try:
+			self.fraudsAnalyzed =int(100.0*self.frauds_detector_counter/self.frauds_detector_counter_ref) #tasso di frodi conosciute (rilevate) nel campione
+		except ZeroDivisionError:
+			self.fraudsAnalyzed = 0
 
 
+	def updateFeedbackMatrix(self, scenario_directory, cycle):
+
+		try:
+			prevcycle = cycle - 1
+			if prevcycle < 0:
+				return False
+			print("prevcycle " + str(prevcycle))
+			prev_dataset_path = scenario_directory+'/'+str(prevcycle)+'/dataset.hdf5'
+			curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
+			print("read prev trust from: " + prev_dataset_path)			
+			prev_dataset = h5py.File(prev_dataset_path, 'a')
+			curr_dataset = h5py.File(curr_dataset_path, 'a')
+			
+
+			for j in range(self.scenario.N):
+
+				
+				Tools.printProgress( j, self.scenario.N)
+				prev = prev_dataset['fback_matrix'][::,j:j+1,0]
+				prev_weithed = [x * 0.5 for x in prev]
+
+				#curr_dataset['fback_matrix'][::,j:j+1,0] += prev_dataset['fback_matrix'][::,j:j+1,0]
+				#curr_dataset['fback_matrix'][::,j:j+1,1] += prev_dataset['fback_matrix'][::,j:j+1,1]
+
+				curr_dataset['fback_matrix'][::,j:j+1,0] = np.sum([curr_dataset['fback_matrix'][::,j:j+1,0], np.multiplay(prev_dataset['fback_matrix'][::,j:j+1,0], 0.5)], axis = 0)
+				curr_dataset['fback_matrix'][::,j:j+1,1] = np.sum([curr_dataset['fback_matrix'][::,j:j+1,1], np.multiplay(prev_dataset['fback_matrix'][::,j:j+1,1], 0.8)], axis = 0)				
+
+			return True
+					
+		except IOError:
+				
+			return False
+
+			
 
 
 	
@@ -178,30 +231,30 @@ class TrustMan(object):
 
 
 
-		dataset = h5py.File(self.scenario.dataset, 'r')
+		dataset = h5py.File(self.dataset.dataset, 'r')
 		trust_scores = dataset['trust_score'][self.scenario.n_providers:self.scenario.N,0]
 
 		avg = np.mean(trust_scores)
 		std = np.std(trust_scores)
 
-		threshold = avg - std
+		self.threshold = avg - std
 
-		if threshold < 0.5:
-			threshold = 0.5
+		if self.threshold < 0.5:
+			self.threshold = 0.5
 
-		print("compare threshold")
+		print("\nClassifying peers into fraudsters and honests using trust scores.")
 		for i in range(self.scenario.n_intermidiaries):
 		
 			if self.scenario.isFraudster(i+self.scenario.n_providers):
 				if trust_scores[i] < 0.5:
-					#print("fraudster is: " + str(i+self.scenario.n_providers) + " with score values: " +  str(Tscore[i]) +"<"+str(threshold))
+					#print("fraudster is: " + str(i+self.scenario.n_providers) + " with score values: " +  str(Tscore[i]) +"<"+str(self.threshold))
 					self.fraudsters += 1
 
-				if trust_scores[i] > 0.5 and trust_scores[i] < 0.9 and trust_scores[i] < threshold:
+				if trust_scores[i] > 0.5 and trust_scores[i] < 0.9 and trust_scores[i] < self.threshold:
 
 					self.suspected_fraudsters += 1
 
-				if trust_scores[i] > 0.5 and trust_scores[i] < 0.9 and trust_scores[i] > threshold:
+				if trust_scores[i] > 0.5 and trust_scores[i] < 0.9 and trust_scores[i] > self.threshold:
 					
 					self.suspected_falsenegative += 1
 
@@ -218,11 +271,11 @@ class TrustMan(object):
 
 					self.honests += 1
 
-				if trust_scores[i] < 0.9 and trust_scores[i] > 0.5 and trust_scores[i] > threshold:
+				if trust_scores[i] < 0.9 and trust_scores[i] > 0.5 and trust_scores[i] > self.threshold:
 					
 					self.suspected_honests += 1
 
-				if trust_scores[i] < 0.9 and trust_scores[i] > 0.5 and trust_scores[i] < threshold:
+				if trust_scores[i] < 0.9 and trust_scores[i] > 0.5 and trust_scores[i] < self.threshold:
 
 					self.suspected_falsepositive += 1
 
@@ -235,9 +288,15 @@ class TrustMan(object):
 					self.unknown_honests += 1
 	
 		self.fraudsters_detection = 100.0 * self.fraudsters / self.scenario.n_fraudsters
-		self.fraudsters_detection_error = 100.0 * self.falsenegative / self.scenario.n_fraudsters
-		self.fraudsters_detection_missing = 100.0 * self.unknown_fraudsters /self.scenario.n_fraudsters
-		self.honests_detection_error = 100.0 * self.falsepositive / self.scenario.n_honests
+		self.fraudsters_detection_suspect =  100.0 * self.suspected_fraudsters / self.scenario.n_fraudsters
+		self.fraudsters_detection_error = 100.0 * (self.falsenegative+self.suspected_falsenegative) / self.scenario.n_fraudsters
+		self.fraudsters_detection_missing = 100.0 * self.unknown_fraudsters / self.scenario.n_fraudsters
+		
+		self.honests_detection = 100.0 * self.honests / self.scenario.n_honests
+		self.honests_detection_suspect = 100.0 * self.suspected_honests / self.scenario.n_honests
+		self.honests_detection_error  = 100.0 * (self.falsepositive + self.suspected_falsepositive) / self.scenario.n_honests
+		self.honests_detection_missing = 100.0 * self.unknown_honests / self.scenario.n_honests
+
 
 
 		

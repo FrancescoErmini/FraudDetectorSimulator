@@ -1,22 +1,8 @@
 
 class Scenario:
-   n_providers=0
-   n_intermidiaries=0
-   n_fraudsters=0
-   fraudsters_percentage = 0
-   n_calls=0
-   n_calls_fraud=0
-   frauds_percentage=0
-   l_chain = 0
-   provider_participation = 0
-   intermidiaries_participation = 0
-
-   n_coop_providers = 0
-   n_coop_intermidiaries = 0
-   n_honests = 0
 
 
-   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation, dataset):
+   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation):
       super(Scenario, self).__init__()
       self.n_providers = n_providers
       self.n_intermidiaries = n_intermidiaries 
@@ -27,14 +13,21 @@ class Scenario:
       self.provider_participation = provider_participation
       self.intermidiaries_participation = intermidiaries_participation
 
-      self.n_fraudsters = n_intermidiaries * fraudsters_percentage // 100
-      self.n_calls_fraud = n_calls * frauds_percentage // 100
-      self.n_coop_providers = provider_participation*n_providers//100
-      self.n_coop_intermidiaries = intermidiaries_participation*(n_intermidiaries-self.n_fraudsters)//100
+      self.n_fraudsters = int(n_intermidiaries * fraudsters_percentage / 100.0)
+      self.n_calls_fraud = int(n_calls * frauds_percentage / 100.0)
+      self.n_coop_providers = int(provider_participation*n_providers/100.0)
+      self.n_coop_intermidiaries = int(intermidiaries_participation*(n_intermidiaries-self.n_fraudsters)/100.0)
       self.n_honests = self.n_intermidiaries - self.n_fraudsters
       self.N = n_providers + n_intermidiaries
-      self.dataset = dataset
+      
 
+
+   def printDetails(self):
+
+      #print('trust alg: ' + args.trustalg)
+      print('scenario: ' + str(self.n_providers) + ' providers,  ' + str(self.n_intermidiaries) + ' intermidiaries,  ' + str(self.fraudsters_percentage) + '[%] fradusters')
+      print('transactions: ' + str(self.n_calls) + ' calls,  ' + str(self.frauds_percentage) + '[%]  call frauds,  ' + str(self.l_chain) + ' chain length')
+      print('cooperation: ' + str(self.provider_participation) + '[%] providers,  ' + str(self.intermidiaries_participation) + '[%] intermidiaries')
 
 
 

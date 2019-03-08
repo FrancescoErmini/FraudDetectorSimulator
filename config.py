@@ -9,8 +9,9 @@ class TraceConfig:
 	#providers_per_call = 4
 	
 	terminating_traffic = 180000000
-	#timespan = 60*24
+	min_per_day = 60*24
 	average_call_duration = 6 #Average call duration
+	n_calls_per_min = 694
 
 	#fraudsters_providers_percentage = 1 #5%degli intermediari
 	#fraud_traffic_percentage = 
@@ -41,8 +42,8 @@ class TrustConfig:
 
 
 	fraudsters_camouflage = True
-	pretrust_strategy = True
-	simmetry_strategy = True
+	pretrust_strategy = False
+	simmetry_strategy = False
 	l_cascade_agreements = 1 # minore di l_chain 1,2,3
 	#clustering_strategy = 1
 

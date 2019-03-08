@@ -2,104 +2,97 @@ import argparse
 import os
 import csv
 from TrustMan import *
+from TraceGenerator import *
 from config import Tools
 from EigenTrust import *
 from Scenario import Scenario
 from TNSLA import *
 from Result import *
+from Dataset import Dataset
 
 def main():
 
-	parser = argparse.ArgumentParser()
-	parser.add_argument('--scenario', help="Trace file source directory for the simulation")
-	#parser.add_argument('--trustalg', help="Name of trace algoritm EigenTrust or TNSLA")
-	#parser.add_argument('--icoop', type=int, help="Intermidiaries cooperation within the trust framework")
+	
+
+	parser = argparse.ArgumentParser(prog='TRACES GENERATOR')
+	#abs params
+	parser.add_argument('--providers', metavar='N', type=int, help="N - total number of local telco providers" )
+	#parser.add_argument('--intermidiaries', nargs=2, metavar=('N', 'F'), type=int,help="N - total number of intermidiary providers. F - number of estimated fraudsters providers" )
+	#parser.add_argument('--calls', nargs=2, metavar=('N', 'F'), type=int,help="N - total number of calls. F - number of estimated fraud calls" )
+	parser.add_argument('--intermidiaries',type=int, help="N - total number of intermidiary providers. F - number of estimated fraudsters providers" )
+	parser.add_argument('--calls', type=int, help="N - total number of calls. F - number of estimated fraud calls" )
+	parser.add_argument('--hops', type=int, help="Average hops per call" )
+
+	#percentage params
+	parser.add_argument('--fraudsters', type=float, help="Percentage of fraudolent intemidiaraies, estimated fraudsters providers" )
+	parser.add_argument('--frauds', type=float, help="Percentage of fraud calls. " )
+	parser.add_argument('--pcoop', type=float, help="Percentage of cooperation provider " )
+	parser.add_argument('--icoop', type=float, help="Percentage of cooperation intermidiaries. " )
+
+	parser.add_argument('--scenario', help="Name of the simulation directory" )
+	parser.add_argument('--cycles', type=int, help="Number of different traces" )
 
 	args = parser.parse_args()
 
-	scenario_directory = 'traces/'+args.scenario
-	dataset = scenario_directory + '/dataset.hdf5'
-	trace_file = scenario_directory + '/traces.csv'
+	print('\n\nstart simulation: ' + args.scenario +'\n')
+	#create an istance of TraceGenerator with the params from cli
+	scenario =  Scenario(n_providers=int(args.providers), 
+						n_intermidiaries=int(args.intermidiaries), 
+						n_calls=int(args.calls), 
+						l_chain = int(args.hops),
+						fraudsters_percentage=float(args.fraudsters), 
+						frauds_percentage=float(args.frauds),
+						provider_participation = int(args.pcoop),
+						intermidiaries_participation = int(args.icoop))
+	scenario.printDetails()
 
 
+	N = scenario.n_providers + scenario.n_intermidiaries
+	cycles = int(args.cycles)
+	for c in range(cycles):
 
-	log_file = scenario_directory + '/INFO.csv'
-	#debug_file = scenario_directory+'/rawresult.log'
-	#posneg_file = scenario_directory+'/rowfback.log'
-	result_file = scenario_directory+'/result.txt'
+		scenario_directory = 'simulation/' + args.scenario
 
+		trace_file  =  scenario_directory + '/' + str(c) + '/traces.csv'
+		#dataset_file = scenario_directory + '/' + str(c) + '/dataset.hdf5'
+		result_file = scenario_directory  + '/' + str(c) +  '/result.txt'
+
+		dataset = Dataset(N, scenario_directory, c)
+		dataset.destroy()
+		dataset.create()
+
+		traceGenerator = TraceGenerator(scenario=scenario)
+		traceGenerator.createCsv(file=trace_file)
+
+
+		manager = TrustMan(scenario=scenario, dataset=dataset)
+
+		results = Result(scenario=scenario, dataset=dataset, manager=manager)
+		manager.createFeedbackMatrix(infile=trace_file)
+		print("PREEEEE")
+		results.printFeedback()
+		manager.updateFeedbackMatrix(scenario_directory=scenario_directory, cycle=c)
+		print("POST")
+		results.printFeedback()
+
+		#trust = EigenTrust(scenario=scenario)
 	
-	with open(log_file, 'r') as f:
-		reader = csv.reader(f)
-		log = list(reader)[1]
+		trust = TNSLA(scenario=scenario, dataset=dataset)
+		trust.initialize()
+
+		t=trust.computeTrust2(1, 598)#206
+
+		print("trust AB: "  + str(t))
+
+		#manager.fraudsterClassifier(data_in='trust_score', outfile=result_file)
 
 
-
-	n_providers=int(log[0])
-	n_intermidiaries=int(log[1])
-	fraudsters_percentage=int(log[2])
-	l_chain = int(log[3])
-	n_calls= int(log[4])
-	frauds_percentage= int(log[5])
-
-	provider_participation= int(log[6])
-	intermidiaries_participation= int(log[7])
-
-	N=n_providers+n_intermidiaries
-
-
-	if os.path.isfile(dataset):
-		os.remove(dataset)
-
-
-	with h5py.File(dataset, "a") as f:
-		f.create_dataset("fback_matrix", shape=(N,N,2), dtype='uint16')
-		f.create_dataset("normal_matrix", shape=(N,N), dtype='uint16')
-		f.create_dataset("opinion_matrix", shape=(N,N,4), dtype='uint16')
-		f.create_dataset("trust_score", shape=(N,1))
-
-
-
-
-	print('simulation: ' + args.scenario)
-	#print('trust alg: ' + args.trustalg)
-	print('scenario: ' + str(n_providers) + ' providers,  ' + str(n_intermidiaries) + ' intermidiaries,  ' + str(fraudsters_percentage) + '[%] fradusters')
-	print('transactions: ' + str(n_calls) + ' calls,  ' + str(frauds_percentage) + '[%]  call frauds,  ' + str(l_chain) + ' chain length')
-	print('cooperation: ' + str(provider_participation) + '[%] providers,  ' + str(intermidiaries_participation) + '[%] intermidiaries')
-
-
-
-
-	 #create an istance of TraceGenerator with the params from cli
-	scenario =  Scenario(n_providers=n_providers, 
-		n_intermidiaries=n_intermidiaries, 
-		fraudsters_percentage=fraudsters_percentage, 
-		n_calls=n_calls, 
-		frauds_percentage=frauds_percentage,
-		l_chain =l_chain,
-		provider_participation=provider_participation,
-		intermidiaries_participation=intermidiaries_participation,
-		dataset=dataset)
-
-
-	manager = TrustMan(scenario=scenario)
-
-	manager.updateMatrix(infile=trace_file, data_out='fback_matrix')
-	
-
-	#if args.trustalg == "EigenTrust":
-	#	trust = EigenTrust(scenario=scenario)
-	#else:
-	trust = TNSLA(scenario=scenario)
-
-	trust.computeTrust(data_in='fback_matrix', data_out='trust_score')
-
-	manager.fraudsterClassifier(data_in='trust_score', outfile=result_file)
-
-
-	results = Result(scenario=scenario, manager=manager)
-	results.store2Csv(scenario_directory+'/trust_score.csv')
-	results.printRes()
+		#
+		#results.store2Csv(scenario_directory+'trust_score.csv')
+		#results.printTrustScores('trust_score')
+		#results.printFeedback()
+		#results.printRes()
+		#results.storeRes(result_file)
 
 
 

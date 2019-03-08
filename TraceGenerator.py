@@ -7,8 +7,8 @@ class TraceGenerator:
       super(TraceGenerator, self).__init__()
       self.scenario = scenario
 
-   def createCsv(self, fileName):
-      f = open(fileName,'w')
+   def createCsv(self, file):
+      f = open(file,'w')
 
       for i in range(0, self.scenario.n_calls):
          Tools.printProgress( i, self.scenario.n_calls)
@@ -61,7 +61,7 @@ class TraceGenerator:
 
    def isFraud(self, index):
       chunk = TraceConfig.n_chunk
-      limit = chunk-(int(self.scenario.frauds_percentage)*int(chunk)//100)
+      limit = int(chunk-self.scenario.frauds_percentage*chunk/100)
       if index%chunk < limit:
          return False
       else:

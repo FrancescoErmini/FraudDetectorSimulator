@@ -104,7 +104,9 @@ class EigenTrust():
 
 		dataset['trust_score'] = np.expand_dims(trust,1)
 
-		
+
+
+
 	def isPreTrust(self, index):
 		
 		if index in range(0, self.scenario.n_providers*self.scenario.provider_participation//100):
