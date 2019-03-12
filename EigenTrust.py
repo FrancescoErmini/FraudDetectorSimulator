@@ -47,7 +47,7 @@ class EigenTrust():
 			Tools.printProgress( j, N)
 
 			#carico in memoria la colonna j della matrice dei feedback
-			fback_matrix_chunk =  dataset[data_in][::,j:j+1]
+			fback_matrix_chunk =  dataset['fback_matrix_updated'][::,j:j+1]
 			#print("DEBUG")
 			#print(fback_matrix_chunk)
 			#calcolo la somma delle differenze (pos-neg) lungo la colonna j

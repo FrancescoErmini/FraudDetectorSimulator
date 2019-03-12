@@ -9,6 +9,7 @@ from Scenario import Scenario
 from TNSLA import *
 from Result import *
 from Dataset import Dataset
+from Plot import *
 
 def main():
 
@@ -43,19 +44,27 @@ def main():
 						fraudsters_percentage=float(args.fraudsters), 
 						frauds_percentage=float(args.frauds),
 						provider_participation = int(args.pcoop),
-						intermidiaries_participation = int(args.icoop))
-	scenario.printDetails()
+						intermidiaries_participation = int(args.icoop),
+						cycles = int(args.cycles))
 
+	scenario.printDetails()
 
 	N = scenario.n_providers + scenario.n_intermidiaries
 	cycles = int(args.cycles)
+
+	source = 2
+	targets = [320,201,597,598]
+
+	#matrix cycles x targets 
+	results = np.zeros((cycles,len(targets)))
+
 	for c in range(cycles):
 
 		scenario_directory = 'simulation/' + args.scenario
 
 		trace_file  =  scenario_directory + '/' + str(c) + '/traces.csv'
 		#dataset_file = scenario_directory + '/' + str(c) + '/dataset.hdf5'
-		result_file = scenario_directory  + '/' + str(c) +  '/result.txt'
+		result_file = scenario_directory  + '/results/result.txt'
 
 		dataset = Dataset(N, scenario_directory, c)
 		dataset.destroy()
@@ -67,32 +76,32 @@ def main():
 
 		manager = TrustMan(scenario=scenario, dataset=dataset)
 
-		results = Result(scenario=scenario, dataset=dataset, manager=manager)
 		manager.createFeedbackMatrix(infile=trace_file)
-		print("PREEEEE")
-		results.printFeedback()
+		#print("PREEEEE")
+		#results.printFeedback()
 		manager.updateFeedbackMatrix(scenario_directory=scenario_directory, cycle=c)
-		print("POST")
-		results.printFeedback()
 
 		#trust = EigenTrust(scenario=scenario)
-	
+
+		result = Result(scenario=scenario,dataset=dataset, manager=manager)
+		result.printFeedback(targets)
+
 		trust = TNSLA(scenario=scenario, dataset=dataset)
 		trust.initialize()
 
-		t=trust.computeTrust2(1, 598)#206
+		
+		for i in range(len(targets)):
+			results[c][i] = trust.computeTrust2(source, targets[i])
+			print("\nTrust from "+str(source)+" to "+str(targets[i])+" at period "+str(c)+"th is "+str(results[c][i]))
 
-		print("trust AB: "  + str(t))
+	plot = Plot(scenario=scenario)
+	plot.transitivity(targets=targets,results=results)
 
-		#manager.fraudsterClassifier(data_in='trust_score', outfile=result_file)
+	#for i in range(len(targets)):
+	#	print("reputation of "+str(targets[i]))
+	#	for j in range(cycles):
+	#		print(str(j)+": "+str(results[j][i]))
 
-
-		#
-		#results.store2Csv(scenario_directory+'trust_score.csv')
-		#results.printTrustScores('trust_score')
-		#results.printFeedback()
-		#results.printRes()
-		#results.storeRes(result_file)
 
 
 

@@ -2,7 +2,7 @@
 class Scenario:
 
 
-   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation):
+   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation, cycles):
       super(Scenario, self).__init__()
       self.n_providers = n_providers
       self.n_intermidiaries = n_intermidiaries 
@@ -19,6 +19,7 @@ class Scenario:
       self.n_coop_intermidiaries = int(intermidiaries_participation*(n_intermidiaries-self.n_fraudsters)/100.0)
       self.n_honests = self.n_intermidiaries - self.n_fraudsters
       self.N = n_providers + n_intermidiaries
+      self.cycles = cycles
       
 
 
@@ -30,6 +31,16 @@ class Scenario:
       print('cooperation: ' + str(self.provider_participation) + '[%] providers,  ' + str(self.intermidiaries_participation) + '[%] intermidiaries')
 
 
+   def isIntermidiary(self, index):
+
+      ind = int(index)
+      low = self.n_providers
+      up =  self.N
+
+      if ind in range(low,up):
+         return True 
+      else:
+         return False
 
    def isFraudster(self, index):
 

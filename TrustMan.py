@@ -189,7 +189,7 @@ class TrustMan(object):
 		except ZeroDivisionError:
 			self.fraudsAnalyzed = 0
 
-
+	'''
 	def updateFeedbackMatrix(self, scenario_directory, cycle):
 
 		try:
@@ -203,27 +203,165 @@ class TrustMan(object):
 			prev_dataset = h5py.File(prev_dataset_path, 'a')
 			curr_dataset = h5py.File(curr_dataset_path, 'a')
 			
+			print("DEBUG POS VALUES OF FIRST COL PRE")
+			print(curr_dataset['fback_matrix'][:,344,0])
+			print(curr_dataset['fback_matrix'][:,344,1])
 
 			for j in range(self.scenario.N):
 
 				
 				Tools.printProgress( j, self.scenario.N)
-				prev = prev_dataset['fback_matrix'][::,j:j+1,0]
-				prev_weithed = [x * 0.5 for x in prev]
+				new_pos = np.array(curr_dataset['fback_matrix'][:,j,0]) + np.array(prev_dataset['fback_matrix'][:,j,0])
+				new_neg = np.array(curr_dataset['fback_matrix'][:,j,1]) + np.array(prev_dataset['fback_matrix'][:,j,1])
+				curr_dataset['fback_matrix'][:,j,0] = new_pos
+				curr_dataset['fback_matrix'][:,j,1] = new_neg
+
+
+
+				#prev = prev_dataset['fback_matrix'][::,j:j+1,0]
+				#prev_weithed = [x * 0.5 for x in prev]
 
 				#curr_dataset['fback_matrix'][::,j:j+1,0] += prev_dataset['fback_matrix'][::,j:j+1,0]
 				#curr_dataset['fback_matrix'][::,j:j+1,1] += prev_dataset['fback_matrix'][::,j:j+1,1]
 
-				curr_dataset['fback_matrix'][::,j:j+1,0] = np.sum([curr_dataset['fback_matrix'][::,j:j+1,0], np.multiplay(prev_dataset['fback_matrix'][::,j:j+1,0], 0.5)], axis = 0)
-				curr_dataset['fback_matrix'][::,j:j+1,1] = np.sum([curr_dataset['fback_matrix'][::,j:j+1,1], np.multiplay(prev_dataset['fback_matrix'][::,j:j+1,1], 0.8)], axis = 0)				
-
+				#curr_dataset['fback_matrix'][:,j,0] = np.sum(np.array([curr_dataset['fback_matrix'][:,j,0]), np.dot(prev_dataset['fback_matrix'][:,j,0], 0.5)], axis = 0)
+				#curr_dataset['fback_matrix'][:,j,1] = np.sum([curr_dataset['fback_matrix'][:,j,1], np.dot(prev_dataset['fback_matrix'][:,j,1], 0.8)], axis = 0)				
+			
+			print("DEBUG POS VALUES OF FIRST COL POST")
+			print(curr_dataset['fback_matrix'][:,344,0])
+			print(curr_dataset['fback_matrix'][:,344,1])
 			return True
 					
 		except IOError:
 				
 			return False
+	
+
+	def updateFeedbackMatrix2(self, scenario_directory, cycle):
+		cycle_deep_max = 2
+		cycle_deep = cycle - cycle_deep_max
+		
+		if cycle_deep < 0:
+			cycle_deep = 0
+		try:
+
+			if cycle == 0:
+				curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
+				curr_dataset = h5py.File(curr_dataset_path, 'a')
+				curr_dataset['fback_matrix'][:] = curr_dataset['fback_matrix_updated'][:]
+				
+
 
 			
+
+			if cycle - cycle_deep == 1:
+				prevcycle = cycle - 1
+				prev_dataset_path = scenario_directory+'/'+str(prevcycle)+'/dataset.hdf5'
+				curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
+				print("Incule prev feedback from: " + prev_dataset_path +" at cycle "+str(cycle))	
+						
+				prev_dataset = h5py.File(prev_dataset_path, 'a')
+				curr_dataset = h5py.File(curr_dataset_path, 'a')
+
+				for j in range(self.scenario.N):
+					Tools.printProgress( j, self.scenario.N)
+					new_pos = np.array(curr_dataset['fback_matrix'][:,j,0]) + np.array(prev_dataset['fback_matrix'][:,j,0])
+					new_neg = np.array(curr_dataset['fback_matrix'][:,j,1]) + np.array(prev_dataset['fback_matrix'][:,j,1])
+					curr_dataset['fback_matrix_updated'][:,j,0] = new_pos
+					curr_dataset['fback_matrix_updated'][:,j,1] = new_neg
+				#print("DEBUG POS VALUES OF FIRST COL POST")
+				#print(curr_dataset['fback_matrix'][:,344,0])
+				#print(curr_dataset['fback_matrix'][:,344,1])
+
+			if cycle - cycle_deep == 2:
+				prevcycle = cycle - 1
+				prevprevcycle = cycle - 2
+
+				prevprev_dataset_path = scenario_directory+'/'+str(prevprevcycle)+'/dataset.hdf5'
+				prev_dataset_path = scenario_directory+'/'+str(prevcycle)+'/dataset.hdf5'
+				curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
+
+				print("Incule prev feedback from: " + prev_dataset_path +" at cycle "+str(cycle))
+				print("Incule prev feedback from: " + prevprev_dataset_path +" at cycle "+str(cycle))
+
+				prevprev_dataset = h5py.File(prevprev_dataset_path, 'a')
+				prev_dataset = h5py.File(prev_dataset_path, 'a')
+				curr_dataset = h5py.File(curr_dataset_path, 'a')
+
+				for j in range(self.scenario.N):
+					Tools.printProgress( j, self.scenario.N)
+					new_pos = np.array(curr_dataset['fback_matrix'][:,j,0]) + np.array(prev_dataset['fback_matrix'][:,j,0])*0.9 #+ np.array(prevprev_dataset['fback_matrix'][:,j,0])//8
+					new_neg = np.array(curr_dataset['fback_matrix'][:,j,1]) + np.array(prev_dataset['fback_matrix'][:,j,1]) #+ np.array(prevprev_dataset['fback_matrix'][:,j,0])//4
+					new_pos = np.array(new_pos) + np.array(prevprev_dataset['fback_matrix'][:,j,0])*0.8
+					new_neg = np.array(new_neg) + np.array(prevprev_dataset['fback_matrix'][:,j,1])*0.9
+					curr_dataset['fback_matrix_updated'][:,j,0] = new_pos
+					curr_dataset['fback_matrix_updated'][:,j,1] = new_neg
+
+				#print("DEBUG POS VALUES OF FIRST COL POST")
+				#print(curr_dataset['fback_matrix'][:,344,0])
+				#print(curr_dataset['fback_matrix'][:,344,1])
+				
+		except IOError:
+			print("error read prev dataset")
+			pass	
+		
+	'''
+
+
+
+	def updateFeedbackMatrix(self, scenario_directory, cycle):
+		
+		cycle_deep_max = TNSLAsettings.cycle_deep_max
+
+		
+
+		
+
+
+		if cycle > cycle_deep_max:
+			cycle_deep = cycle_deep_max
+		else:
+			cycle_deep = cycle
+
+		if cycle_deep_max == 0:
+			cycle_deep = 0
+		
+		try:
+			"""
+			if cycle == 0:
+				curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
+				curr_dataset = h5py.File(curr_dataset_path, 'a')
+				curr_dataset['fback_matrix'][:] = curr_dataset['fback_matrix_updated'][:]
+			"""	
+
+			curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
+			curr_dataset = h5py.File(curr_dataset_path, 'a')
+			#inizializzo fback_matrix_updated con i valori della simulazione corrente
+			curr_dataset['fback_matrix_updated'][:] = curr_dataset['fback_matrix'][:]
+
+			for i in range(0,cycle_deep):
+				print(".")
+				prev_dataset_path = scenario_directory+'/'+str(cycle-1-i)+'/dataset.hdf5'
+				prev_dataset = h5py.File(prev_dataset_path, 'a')
+
+				for j in range(self.scenario.N):
+					pos_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*0.5
+					neg_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*1.0
+
+					#np.array(curr_dataset['fback_matrix_updated'][:,j,0], dtype=np.float32)+= np.array(prev_dataset['fback_matrix'][:,j,0], dtype=np.float32)*(1.0/(1.0+i))
+					curr_dataset['fback_matrix_updated'][:,j,0] += np.array(prev_dataset['fback_matrix'][:,j,0]) * pos_forgetting_factor   #(1.0-(i/(cycle_deep+1)))
+					curr_dataset['fback_matrix_updated'][:,j,1] += np.array(prev_dataset['fback_matrix'][:,j,1]) * neg_forgetting_factor #(1.0-(i/(cycle_deep+2)))
+
+		except IOError:
+			print("error read prev dataset")
+			pass	
+		
+
+
+
+
+
+
 
 
 	

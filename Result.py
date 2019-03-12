@@ -14,10 +14,6 @@ class Result:
 		self.dataset = dataset
 		self.manager = manager
 
-
-
-
-
 	def printRes(self):
 
 		print("\nSIM CONFIG")
@@ -60,9 +56,9 @@ class Result:
 		print("honests detection missing: "+str(self.manager.honests_detection_missing))
 
 
-	def storeRes(self, outfile):
+	def storeStat(self, file):
 
-		with open(outfile, "w") as text_file:
+		with open(file, "w") as text_file:
 				
 				print(f"\nSIM CONFIG", file=text_file)
 				print(f"providers:  {str(self.scenario.n_providers)}", file=text_file)
@@ -120,12 +116,10 @@ class Result:
 				print(f"honests detection error: {str(self.manager.honests_detection_error)}%", file=text_file)
 				print(f"honests detection missing: {str(self.manager.honests_detection_missing)}%", file=text_file)
 
-
-
 	def printTrustScores(self,data_in):
 
 		dataset = h5py.File(self.dataset.dataset, 'a')
-		trust_scores = dataset[data_in][self.scenario.n_providers:self.scenario.N,0]
+		trust_scores = dataset['trust_scores'][self.scenario.n_providers:self.scenario.N,0]
 		#print(trust_scores)
 		print("\nPrint 3 random honest trust score: ")
 		for i in range(3):
@@ -137,31 +131,17 @@ class Result:
 			rnd_fraudster_node = random.randint(self.scenario.n_honests, self.scenario.n_honests + self.scenario.n_fraudsters-1)
 			print(trust_scores[rnd_fraudster_node])
 
-	def printFeedback(self):
+	def printFeedback(self, targets):
 		dataset = h5py.File(self.dataset.dataset, 'a')
-		random.seed(9001)
-		print("\nPrint 3 random honest feedback pos-neg: ")
-		for s in range(3):
-			j = random.randint(self.scenario.n_providers,self.scenario.n_providers+self.scenario.n_honests-1)
+		#random.seed(9001)
 
-			#carico in memoria la colonna j della matrice dei feedback
-			fback_matrix_chunk =  dataset['fback_matrix'][::,j:j+1]
-			
-			pos = 0
-			neg = 0
-			for i in range(self.scenario.N):
-
-				pos += fback_matrix_chunk[i][0][0]
-				neg += fback_matrix_chunk[i][0][1]
-			print("id="+str(j)+" has "+ str(pos) + " pos and " + str(neg) + " neg")
-		print("threshold: " + str(self.manager.threshold))
 		
-		print("\nPrint 3 random fraudster feedback pos-neg: ")
-		for s in range(3):
-			j = random.randint(self.scenario.N-self.scenario.n_fraudsters,self.scenario.N -1)
+		for target in targets:
+
+			#j = random.randint(self.scenario.n_providers,self.scenario.n_providers+self.scenario.n_honests-1)
 
 			#carico in memoria la colonna j della matrice dei feedback
-			fback_matrix_chunk =  dataset['fback_matrix'][::,j:j+1]
+			fback_matrix_chunk =  dataset['fback_matrix_updated'][::,target:target+1]
 			
 			pos = 0
 			neg = 0
@@ -169,9 +149,12 @@ class Result:
 
 				pos += fback_matrix_chunk[i][0][0]
 				neg += fback_matrix_chunk[i][0][1]
-			print("id="+str(j)+" has "+ str(pos) + " pos and " + str(neg) + " neg")
-
-		#print(trust_scores)
+			if self.scenario.isFraudster(target):
+				print("fraudster="+str(target)+" has "+ str(pos) + " pos and " + str(neg) + " neg")
+			else:
+				print("honest="+str(target)+" has "+ str(pos) + " pos and " + str(neg) + " neg")
+		
+		
 		
 
 	def store2Csv(self, file):
@@ -186,4 +169,17 @@ class Result:
 				if trust_score < self.manager.threshold:
 					status = 1
 				writer.writerow([i,trust_score, status])
-		
+
+	def storeRes(self, ):
+		dataset = h5py.File(self.dataset.dataset, 'a')
+		trust_scores = dataset['trust_score'][:]
+		with open(file, mode='w') as info:
+			writer = csv.writer(info, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+			writer.writerow(["id", "trust_score", "status"])
+			for i in range(self.scenario.n_providers,self.scenario.N):
+				trust_score = trust_scores[i][0]
+				status = 0
+				if trust_score < self.manager.threshold:
+					status = 1
+				writer.writerow([i,trust_score, status])
+			

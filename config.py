@@ -32,6 +32,16 @@ class TraceConfig:
 	n_cluster_size = 1
 
 
+
+
+	def cycles2days(call_per_cycle):
+
+
+
+		
+		return call_per_cycle*TraceConfig.n_calls_per_min/(24*60)
+
+
 	
 
 class TrustConfig:
@@ -47,6 +57,9 @@ class TrustConfig:
 	l_cascade_agreements = 1 # minore di l_chain 1,2,3
 	#clustering_strategy = 1
 
+class TNSLAsettings:
+	trustee_score = 0.8
+	cycle_deep_max = 10
 
 
 
