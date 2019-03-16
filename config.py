@@ -35,10 +35,6 @@ class TraceConfig:
 
 
 	def cycles2days(call_per_cycle):
-
-
-
-		
 		return call_per_cycle*TraceConfig.n_calls_per_min/(24*60)
 
 
@@ -46,20 +42,17 @@ class TraceConfig:
 
 class TrustConfig:
 
-	#detection_delay = 60*24 # less then time_span
-	#cooperating_retail_percentage = 1 #%di partecipazione dei nodi di terminazione
-	#cooperating_wholesale_percentage = 1
-
-
 	fraudsters_camouflage = True
 	pretrust_strategy = False
-	simmetry_strategy = False
+	simmetry_strategy = True
 	l_cascade_agreements = 1 # minore di l_chain 1,2,3
 	#clustering_strategy = 1
 
 class TNSLAsettings:
 	trustee_score = 0.8
 	cycle_deep_max = 10
+	pos_forgetting_factor = 0.1
+	neg_forgetting_factor = 1.0
 
 
 
@@ -97,18 +90,5 @@ class Tools:
 			print("100%")
 		return
 		
-
-
-
-
-		
-class Result:
-	graph1 = False
-	graph2 = False
-	graph3 = False
-	graph4 = False
-	graphA = False
-	graphB = False
-	graphC = False
 
 		

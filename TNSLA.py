@@ -46,7 +46,10 @@ class TNSLA():
 		#	self.pretrust[i] = 1.0
 		
 
-		
+	"""
+	A esprime le proprie opinoni sulla riga A
+	B riceve le opinioni altrui sulla colonna B
+	"""
 		
 	def computeTrust2(self, A, B):
 
@@ -66,7 +69,7 @@ class TNSLA():
 		#print("negAB "+str(neg))
 		#print("posAB "+str(pos))
 
-		if pos > 100 or neg > 100:
+		if pos > 10 or neg > 10:
 			#A has direct feedback over B, then compute directly A opion over B
 			opinion_A_B = self.edit(pos, neg, self.pretrust[B])
 			#store A opinion over B in the opinion matrix
@@ -91,7 +94,7 @@ class TNSLA():
 				
 				if self.eval(self.edit(pos_A_i,neg_A_i, self.pretrust[i])) > trustee_score and self.eval(self.edit(pos_i_B,neg_i_B,self.pretrust[B]))!= 0.5:			
 
-					print("A "+str(A)+" best trustee for B "+str(B)+" is T "+str(i)+" with pretrust="+str(self.pretrust[i])+", posAi="+str(pos_A_i)+", negAi="+str(neg_A_i)+", posiB="+str(pos_i_B)+", negiB="+str(neg_i_B))
+					#print("A "+str(A)+" best trustee for B "+str(B)+" is T "+str(i)+" with pretrust="+str(self.pretrust[i])+", posAi="+str(pos_A_i)+", negAi="+str(neg_A_i)+", posiB="+str(pos_i_B)+", negiB="+str(neg_i_B))
 					if trustee_count == 0:
 						#update new trustee values
 						opinion_A_i = self.edit(pos_A_i,neg_A_i,self.pretrust[i])
@@ -108,23 +111,70 @@ class TNSLA():
 
 						#fback_from_T =  dataset['fback_matrix'][::,T:T+1]
 			if trustee_count == 0:
-				print("A "+str(A)+" don't have any trustee for B "+str(B))
+				#print("A "+str(A)+" don't have any trustee for B "+str(B))
 				return 0.5
 			else:
-				TNSLA.printOpinion(opinion_A_i)
-				TNSLA.printOpinion(opinion_i_B)
+				#TNSLA.printOpinion(opinion_A_i)
+				#TNSLA.printOpinion(opinion_i_B)
 					
 				opinion_A_B = self.discount(opinion_A_i, opinion_i_B)
 				self.storeOpinion(A,B,opinion_A_B)
 				res = self.eval(opinion_A_B)
 				if res > 1.0 or res < 0.0:
+					print("error occur")
 					TNSLA.printOpinion(opinion_A_B)
 
 				return res
 
+	
+
+
+
+
+	def computeTrust(self,target):
+		
+		#N = self.scenario.n_providers + self.scenario.n_intermidiaries
+		
+		if not self.scenario.isIntermidiary(target):
+			#print("error: you can not compute. trust of an originating/terminating provider")
+			return -1
+
+		dataset = h5py.File(self.dataset.dataset, 'a')
+		
+		fback_to_target =  dataset['fback_matrix_updated'][:,target,:]
+
+		opinion_all_target   = [0.0, 0.0, 1.0, 0.5]
+
+		neg_counter = 0
+		pos_counter = 0
+
+		for j in range(self.scenario.N):
+			
+				pos_j_target = fback_to_target[j][TNSLA.POS]
+				neg_j_target = fback_to_target[j][TNSLA.NEG]
+
+
+				neg_counter += neg_j_target
+				pos_counter += pos_j_target
+
+				if pos_j_target > 0 or neg_j_target > 0:
+
+					
+						opinion_j_target = self.edit(pos_j_target, neg_j_target, self.pretrust[target])
+						opinion_all_target = self.consensus(opinion_all_target, opinion_j_target)
+		
+		if neg_counter > 100 or pos_counter > 100:
+			return self.eval(opinion_all_target)		
+		else:
+			return 0.5
+
+
+
+
+				
 
 		
-		
+	'''		
 	def computeTrust3(self, A, B):
 
 		N = self.scenario.n_providers + self.scenario.n_intermidiaries
@@ -212,6 +262,7 @@ class TNSLA():
 		else:
 			print("A "+str(A)+" don't have any trustee for B "+str(B))
 			return 0.5
+	'''
 
 
 	def storeOpinion(self, _from, _to, opinion):

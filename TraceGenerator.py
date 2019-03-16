@@ -58,6 +58,21 @@ class TraceGenerator:
       f.close()
 
 
+   '''
+   def analyseTrace(self, infile):
+      with open(infile, 'r') as src:
+         reader = csv.reader(src)
+         traces = list(reader)
+
+      print("\nAnalysing traces....")
+
+      for trace in traces:
+         pass
+   '''
+
+
+
+
 
    def isFraud(self, index):
       chunk = TraceConfig.n_chunk
@@ -149,3 +164,4 @@ class TraceGenerator:
             found = True
       return found
       """
+

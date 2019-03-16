@@ -1,0 +1,29 @@
+
+
+Nel settore delle telecomunicazioni, una rotta bianca è una rotta in cui sia la fonte che la destinazione sono una soluzione legale. Questo è contrario a una rotta nera, che è una rotta illegale a entrambe le estremità. Anche comune nelle telecomunicazioni (in particolare il VoIP) è il termine percorso grigio, che definisce un percorso legale per un paese o il partito da un lato, ma illegale sul lato alternativo.
+
+Un esempio della tricotomia bianca / grigia / nera è spesso visto nelle rotte delle telecomunicazioni dagli Stati Uniti all'India. In India, un oligopolio delle telecomunicazioni è concesso a poche grandi società. Quindi, tutto il traffico di telecomunicazioni ("bianco") legale verso il paese è soggetto alle tariffe imposte da queste società. Per superare questa restrizione al fine di ottenere costi inferiori per i consumatori e realizzare un profitto nel processo, molte piccole parti hanno installato router VoIP in case e uffici in India. Il traffico delle telecomunicazioni dai Paesi esteri come gli Stati Uniti, il Regno Unito viene inviato a questi router VoIP tramite IP e terminato alla rete locale PSTN indiana. [1] Questo processo è illegale in India ("nero"), ma completamente legale negli Stati Uniti ("bianco"). Un percorso come questo, bianco su un'estremità e nero sull'altro è detto "grigio".
+
+
+
+Per introdurre il probema delle frodi è utile scorrere i casi noti dai più eclatanti a quelli meno, accaduti engli ultimi anni.
+
+
+ or\url{http://bswan.org/traffic_trust.asp}  suppliers we have little historical information on, we require them to sign an active anti-fraud amendment that says if they commit fraud or FAS, we withhold payment.  Then, when a supplier is caught engaging in FAS, they are automatically removed and not put back in-route until they sign an anti-fraud amendment.
+
+Ma la nostra arma più potente è forse l'analisi approfondita che facciamo sui tariffari di un fornitore. Abbiamo un team dedicato che fa esattamente questo.
+Ad esempio, guardando un tariffario che abbiamo recentemente ricevuto da un operatore, abbiamo notato diverse discrepanze. Numero uno: pubblicizzano un percorso Premium quando sappiamo dal nostro lungo rapporto con il corriere che un percorso Premium non esiste in quel paese.
+Analizzando altri codici nel tariffario, troviamo che questi codici non esistono o sono intervalli di codice non allocati. Vendono persino "Country X Mobile" a prezzi inferiori al mercato. Tutte queste prove indicano una cosa: il fornitore è pronto a fare un dollaro veloce. Non passerebbero mai attraverso il nostro filtro rigoroso.
+
+possiamo bloccare circa 400.000 tentativi su questi intervalli di frode. Andiamo anche alle destinazioni di alta frode e ci concentriamo sul blocco dei numeri non assegnati all'interno di questi intervalli perché c'è un'intera sub-industria di rivenditori specializzati nella distribuzione di numeri non assegnati.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{img/guilty.png}
+  \caption{Parametri di valutazione del modello}
+  \label{fig:outcome}
+\end{figure}
+
+\ textbf {Route blending} si verifica quando un operatore invia illegittimamente parte del proprio traffico di transito su una rete di bassa qualità e a basso costo, violando i contratti intercarrier e gli accordi sul livello di servizio. \\
+\ textbf {Re-origination} (noto anche come refile, hubbing, refiling) utilizza un paese intermedio per ridurre le spese di terminazione. Il traffico internazionale viene prima inviato a un paese hub, che ha un mercato più competitivo e accordi di interconnessione più favorevoli [He05, Mel00]. L'operatore nel paese hub cambia l'origine della chiamata, modificando la Calling Line Identity (CLI) nella segnalazione SS7, e invia la chiamata al paese di destinazione. In questo modo, una tassa di terminazione delle chiamate più economica viene pagata al paese di destinazione. Sia l'originatore che l'operatore intermedio traggono profitto da questa operazione; mentre l'operatore nel paese di destinazione perde entrate. Questa frode può anche essere eseguita direttamente manipolando le informazioni CLI nella segnalazione di chiamata. Ad esempio, il recente regolamento dell'Unione europea, che impone tariffe di terminazione delle chiamate più convenienti per le chiamate originate e terminate all'interno dell'UE, crea un'opportunità di arbitraggio per questo tipo di frode
+\ textbf {Frode di rivendita internazionale non autorizzata} 5 è uno schema simile che manipola le discrepanze di prezzo impostando la chiamata internazionale tramite una terza contea usando un meccanismo di inversione delle chiamate come le carte telefoniche. È diventato popolare negli anni '90 e gli Stati Uniti sono stati utilizzati come paese intermedio a causa del mercato altamente competitivo e delle basse tariffe internazionali di terminazione

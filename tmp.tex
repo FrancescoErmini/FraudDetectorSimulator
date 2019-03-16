@@ -1,0 +1,131 @@
+
+\subsubsection{Calcolo della reputazione}
+Il calcolo della reputazione si basa su due aspetti:
+\begin{enumerate}
+\item La riduzione dei falsi positivi, vedi \ref{falsipositivi}.
+\item La prevenzione di strategie maligne atte a sovvertire il sistema di reputazione, vedi \ref{strategiemaligne}.
+\end{enumerate}
+
+\paragraph{Riduzione dei falsi positivi}
+Per valutare la riduzione dei falsi positivi si calcola il valore di reputazione che tutti gli intermediari avrebbero avuto se ogni transazione che li riguarda (comprese quelle soggette a frode)  avesse prodotto un feedback positivo. In altre parole si considera la reputazione degli intermediari onesti come se non esistessero falsi positivi. I valori ottenuti saranno memorizzati nel vettore  $T_{ref}$ \\
+Successivamente si calcola il valore di reputazione senza applicare i metodi di riduzione dei falsi positivi.  I valori ottenuti saranno memorizzati in $T_{worstcase}$ . \\
+Infine si procederà a calcolare i valori di reputazione considerando i metodi di riduzione dei falsi positivi secondo l'ordine:
+\begin{enumerate}
+\item sconto per accordi.
+\item sconto per simmetria.
+\item sconto per gruppo di appartenenza.
+\end{enumerate}
+\subparagraph{Sconto per accordi}
+Lo sconto per accordi è stato simulato tramite la variabile \emph{l\_cascade\_agreements} che esprime il numero di accordi consecutivi dall'operatore di origine verso gli operatori di transizione presenti su quella traccia. Il valore di  \emph{l\_cascade\_agreements} dovrà essere sempre inferiore alla lunghezza della catena \emph{l\_chain}. Lo sconto non viene applicato se un nodo è frodatore.
+Questa implementazione è usato solo per scopi dimostrativi in fase di simulazione. In fase di implementazione è necessario una configurazione statica degli accordi, come indicato in \ref{scontoaccordi}. 
+\begin{python}
+...
+for i in range(len(trace["transit"])-1):
+	source = trace["transit"][i]["id"]
+	target = trace["transit"][i+1]["id"]
+	discount = 0
+	if i < TrustConfig.l_cascade_agreements and target not in range(<fraudsters_id>):
+		discount = 1.0 / (i+2)
+		M[source][target][1] = M[source][target][1] - discount
+\end{python}
+
+\subparagraph{Sconto per simmetria}
+La modellazione della simmetria nelle transazioni oneste e dell'asimmetria nelle transazioni fraudolente è stata modellata in fase di creazione delle tracce \ref{generatoreditracce}. \\
+La lettura delle tracce ha poi portato a definire la matrice $M$ in cui si sono registrati i feedback negativi e positivi tra i nodi $(i,j)$ definiti sulle colonne, righe della matrice stessa.\\
+Lo sconto per simmetria si applica alla matrice $M$. Iterando sui i soli elementi della parte triangolare superiore della matrice si evita di calcolare lo sconto due volte.
+\begin{python}
+for j in range(<all nodes>):
+	for i in range(j+1):
+		discount = min(M[i][j][1],M[j][i][1])
+		M[i][j][1] = M[i][j][1] - discount
+		M[j][i][1] = M[j][i][1] - discount
+\end{python}
+
+\subparagraph{Sconto per gruppo di appartenenza}
+I cardinalità dei gruppi è definita in \emph{n\_cluster\_size} ed è uguale per tutti; provider, frodatori e intermediari.
+Il valore di reputazione attribuito ad un gruppo è calcolato a partire dalla reputazione dei singoli nodi che ne fanno parte. 
+La reputazione individuale è ricalcolata tramite combinazione con la reputazione di gruppo, come visto in \ref{scontogruppo}.
+\begin{python}
+ for g in range( n_groups ):
+	<sum all pos and neg ratings that points to all members of the group>
+	Tgroup[g] = (1.0+pos)/(2.0+pos+neg)
+	for i in range( g*n_cluster_size , (g+1)*n_cluster_size ):
+		num = Tscore[i] * Tgroup[g]
+		den = (Tscore[i] * Tgroup[g]) + ((1-Tscore[i])*(1-Tgroup[g])
+		Tscore[i] = num  / den
+\end{python}
+
+
+
+
+\subparagraph{Comportamento nella risposta}
+In riferimento alle casistiche elencate in \ref{casisticherisposte}, il simulatore modella il diverso comportamento del nodo fraudolento nel popolare il vettore dei sospetti con la variabile \emph{next\_hop\_strategy}. In particolare
+\begin{itemize}
+\item il nodo fraudolento non risponde ( \emph{next\_hop\_strategy=1})
+\item  il nodo fraudolento risponde indicando un nodo errato ( \emph{next\_hop\_strategy = 2})
+\item  il nodo fraudolento risponde indicando un nodo corretto ( \emph{next\_hop\_strategy = 3})
+\end{itemize}
+Il diverso comportamento porta a comporre diversamente il vettore dei sospetti. In particolare si ha che nel caso 3 verranno inseriti tutti gli \emph{l\_chain-1} sospetti onesti più uno fraudolento, mentre nei casi 1 e 2 verranno inseriti solo un nodo onesto più un nodo fraudolento.
+\begin{python}
+intermidiaries.append(random.randint(<first honest intermidiary>))
+	if FraudStrategy.next_hop_strategy == 3: 
+		for t in range(l_chain-2):
+			intermidiaries.append(random.randint(<next honest intermidiaries>))
+		intermidiaries.append(random.randint(<fraudster intermidiary>))
+\end{python}
+
+
+\paragraph{Valutazione dei ricavi ottenuti dalle strategie maligne}
+
+La simulazione dei ricavi derivanti dalle frodi \ref{frodi} viene attuata in due passi:
+\begin{enumerate}
+\item In fase di generazione delle tracce viene simulata la differenza tra durata e tariffazione viste da originator e terminator.
+\item In fase di calcolo della reputazione vengono usate le formule in \ref{revenue} per quantificare i ricavi in seguito a frode.
+\end{enumerate}
+\subparagraph{Generazione di tracce con frodi}
+Prima si generano i dati per  il caso senza frode.
+\begin{python}
+trace = {
+	...
+	"durationA": 0,
+	"durationB": 0,
+	"rateA": 0,
+	"rateB": 0
+}
+
+durationA = random.randint(TarifConfig.duration_min,TarifConfig.duration_max)
+durationB = durationA
+rateA = random.uniform(TarifConfig.rate_local_min,TarifConfig.rate_local_max)
+rateB = rateA
+\end{python}
+
+E poi si modificano i dati nel caso con frode. 
+\begin{python}
+..
+if Fraud:
+	if FraudType.fas_fraud:
+		duration_fas = (1/60.0)*FraudType.fas_duration
+		durationA = durationA + duration_fas
+	if FraudType.bypass_fraud:
+		rateA = rateA + random.uniform(FraudType.bypass_revenue-0.02, FraudType.bypass_revenue+0.02)
+	if FraudType.lrn_fraud:
+		rateA = random.uniform(TarifConfig.rate_inter_min , TarifConfig.rate_inter_max)
+		rateB = rateA
+		rateA = rateA / FraudType.lrn_price_rapport
+\end{python}
+
+\subparagraph{Registrazione dei guadagni}
+Nel \emph{TrustManager} vengono calcolati i ricavi espressi in euro per ogni traccia. Configurando le frodi  in \emph{FraudType} si possono studiare separatamente i vari casi oppure combinarli, come nel caso della frode fas e della frode bypass.
+\begin{python}
+def calcRevenue():
+	r_bypass = (trace["rateA"]-trace["rateB"])*trace["durationA"]
+	r_fas = (trace["durationA"] - trace["durationB"])*trace["rateA"]
+	r_lrn = (trace["rateB"]-trace["rateA"])*trace["durationA"]
+\end{python}
+Il ricavo ottenuto da una traccia viene sommato su tutti i gruppi dei nodi che sono presenti nella traccia. In altre parole il vettore \emph{Revenue} memorizza il guadagno fraudolento di ogni gruppo. 
+\begin{python}
+Revenue[target/n_cluster_size] += TrustManager.calcRevenue(trace)
+\end{python}
+
+
+

@@ -1,6 +1,8 @@
 import argparse
 import os
 import csv
+import random
+
 from TrustMan import *
 from TraceGenerator import *
 from config import Tools
@@ -49,14 +51,30 @@ def main():
 
 	scenario.printDetails()
 
+	general = False
+
 	N = scenario.n_providers + scenario.n_intermidiaries
 	cycles = int(args.cycles)
 
-	source = 2
-	targets = [320,201,597,598]
+	sources = [x for x in range(0,scenario.n_providers,10)]
+	#targets = [(random.randint(200,599)) for x in range(20)]
+	targets = [(x+scenario.n_providers) for x in range(0,scenario.n_intermidiaries,10)]
+	targets[scenario.n_intermidiaries//10-1] = 599
+	targets[scenario.n_intermidiaries//10-2] = 598
+	targets[scenario.n_intermidiaries//10-3] = 597
+	targets[scenario.n_intermidiaries//10-4] = 596
+	"""
+	
+	if general:
+		targets = [(x+scenario.n_providers) for x in range(scenario.n_intermidiaries)]
+	"""
+		
 
 	#matrix cycles x targets 
 	results = np.zeros((cycles,len(targets)))
+	honests_score_avg = np.zeros(cycles)
+	fraudsters_score_avg = np.zeros(cycles)
+
 
 	for c in range(cycles):
 
@@ -77,6 +95,7 @@ def main():
 		manager = TrustMan(scenario=scenario, dataset=dataset)
 
 		manager.createFeedbackMatrix(infile=trace_file)
+		print("tot calls managed by fraudsters: good:" + str(manager.disguised_behaviour) + " and bad:" + str(manager.malicious_behaviour))
 		#print("PREEEEE")
 		#results.printFeedback()
 		manager.updateFeedbackMatrix(scenario_directory=scenario_directory, cycle=c)
@@ -84,28 +103,58 @@ def main():
 		#trust = EigenTrust(scenario=scenario)
 
 		result = Result(scenario=scenario,dataset=dataset, manager=manager)
-		result.printFeedback(targets)
+		#result.printFeedback(targets)
 
 		trust = TNSLA(scenario=scenario, dataset=dataset)
 		trust.initialize()
 
-		
+
 		for i in range(len(targets)):
-			results[c][i] = trust.computeTrust2(source, targets[i])
-			print("\nTrust from "+str(source)+" to "+str(targets[i])+" at period "+str(c)+"th is "+str(results[c][i]))
+			Tools.printProgress( i, len(targets))
+			"""
+			if general:
 
+				results[c][i] = trust.computeTrust(targets[i])
+			else:
+			"""
+			for j in range(len(sources)):
+				if scenario.isCoopProvider(sources[j]):
+					results[c][i] = trust.computeTrust2(sources[j], targets[i])
+					#print("\nTrust from "+str(sources[j])+" to "+str(targets[i])+" at period "+str(c)+"th is "+str(results[c][i]))
+					result.fraudsterClassifier2(targets[i], results[c][i])
+		result.printRes()
+		"""
+		if general:
+			r = result.printTrustAvg(targets, results[c])
+			honests_score_avg[c] = r[0]
+			fraudsters_score_avg[c] = r[1]
+		"""
+	
 	plot = Plot(scenario=scenario)
-	plot.transitivity(targets=targets,results=results)
+	"""
+	if general:
+		result.fraudsterClassifier(targets, results[cycles-1])
+		result.printRes()
+		plot.statistics(result=result)
+		#plot.trustScore(honests_score_avg, fraudsters_score_avg, result.getFraudBehaviour())
+	else:
+	"""
+		#fa solo i res dell utlimo ciclo!!
+	#result.printRes()
+	plot.plotPie(result)
+		#plot.transitivity(targets=targets,results=results)
 
-	#for i in range(len(targets)):
-	#	print("reputation of "+str(targets[i]))
-	#	for j in range(cycles):
-	#		print(str(j)+": "+str(results[j][i]))
 
+'''
+def saveSetting(self, sim_root):
+	if os.path.isfile(sim_root+'/info/sim_params.csv'):
+		os.remove(sim_root+'/info/sim_params.csv')
 
-
-
-
+	with open(sim_root+'/info/sim_params.csv', mode='w') as info:
+		writer = csv.writer(info, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+		writer.writerow(["providers", "intermidiaries","fraudsterspercentage", "l_chain","calls","fraudspercentage", "n_coop_providers", "n_coop_intermidiaries", "fraudster_camuflage", "simmetry_strategy", "pretrust_strategy"])
+		writer.writerow([scenario.n_providers, scenario.n_intermidiaries, scenario.fraudsters_percentage, scenario.l_chain, scenario.n_calls, scenario.frauds_percentage, scenario.provider_participation, scenario.intermidiaries_participation, TrustConfig.fraudsters_camouflage, TrustConfig.simmetry_strategy, TrustConfig.pretrust_strategy])
+'''
 
 #print args.file.readlines()
 if __name__ == '__main__':

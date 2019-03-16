@@ -41,9 +41,9 @@ def main():
    cycles = int(args.cycles)
    for c in range(cycles):
 
-      sim_root = 'simulation/' + args.scenario + '/'+ str(c) +'/'
+      sim_root = 'simulation/traces/' + args.scenario + '/'+ str(c) +'/'
       # sim_root = 'simulation/' + args.scenario + '/'
-      dataset = sim_root + 'dataset.hdf5'
+      #dataset = sim_root + 'dataset.hdf5'
 
       if not os.path.exists(sim_root):
          print ("create dir: "+sim_root)

@@ -54,4 +54,95 @@ class Plot():
 		#plt.title("Trust transitivity cases", loc='left', fontsize=12, fontweight=0, color='black')
 		plt.xlabel("cycles")
 		plt.ylabel("trust score")
-		plt.show()		
+		plt.show()	
+
+	def statistics(self, result):
+		"""
+		self.fraudsters_detection = 0
+		self.fraudsters_detection_suspect = 0
+		self.fraudsters_detection_error = 0
+		self.fraudsters_detection_missing = 0
+
+		self.honests_detection = 0
+		self.honests_detection_suspect = 0
+		self.honests_detection_error  = 0
+		self.honests_detection_missing = 0
+		"""
+
+		# Data to plot
+		plt.figure(1)
+		plt.title("fraudsters detection statistics")
+		plt.text(-1, -1.2, 'fraud behaviour: '+str(result.getFraudBehaviour()), fontsize=12)
+		
+		labels = 'detected', 'suspected', 'errors', 'missed'
+		sizes = [result.fraudsters_detection, result.fraudsters_detection_suspect, result.fraudsters_detection_error, result.fraudsters_detection_missing]
+		colors = ['yellowgreen', 'gold', 'lightcoral', 'lightskyblue']
+		patches, texts = plt.pie(sizes, colors=colors, shadow=False, startangle=90)
+		plt.legend(patches, labels, loc="best")
+		plt.axis('equal')
+		plt.tight_layout()
+
+		plt.figure(2)
+		plt.title("honests detection statistics")
+		plt.text(-1, -1.2, 'fraud behaviour: '+str(result.getFraudBehaviour()), fontsize=12)
+
+		sizes = [result.honests_detection, result.honests_detection_suspect, result.honests_detection_error, result.honests_detection_missing]
+		colors = ['yellowgreen', 'gold', 'lightcoral', 'lightskyblue']
+		patches, texts = plt.pie(sizes, colors=colors, shadow=False, startangle=90)
+		plt.legend(patches, labels, loc="best")
+		plt.axis('equal')
+		plt.tight_layout()
+
+
+		plt.show()
+
+	def trustScore(self, honests_score_avg, fraudsters_score_avg,fraudBehaviour):
+		N = len(honests_score_avg)
+		ind = np.arange(N)  # the x locations for the groups
+		width = 0.1   # the width of the bars
+		fig, ax = plt.subplots()
+		rects1 = ax.bar(ind-width/2, honests_score_avg, width, color='green')
+		rects2 = ax.bar(ind+width/2, fraudsters_score_avg, width, color='red')
+		#rects4 = ax.bar(ind+2*width, pFalsenegative, width, color='tomato', yerr=2)
+		#rects5 = ax.bar(ind+3*width, fraudRevenuePercentage, width, color='r', yerr=3)
+		ax.set_ylabel('reputation score')
+		ax.set_xlabel('cycles')
+		#ax.set_title('global repution')
+		ax.legend((rects1[0], rects2[0]), ('honests', 'fraudsters'), bbox_to_anchor=(1.0,1.0))
+		plt.plot([-width, N-1+width], [0.5, 0.5], "k--")
+		plt.plot([-width, N-1+width], [TNSLAsettings.trustee_score, TNSLAsettings.trustee_score], "k--")
+		plt.text(0, 1.1, 'fraud behaviour: '+str(fraudBehaviour), fontsize=12)
+		plt.tight_layout()
+		plt.show()
+
+	def plotPie(self, result):
+
+		detect = result.fraudsters * 100.0 / result.fraudsters_tot
+		suspect = result.suspected_fraudsters * 100.0 / result.fraudsters_tot
+		miss = result.unknown_fraudsters * 100.0 / result.fraudsters_tot
+		fn = result.falsenegative * 100.0 / result.fraudsters_tot
+		fp = result.falsepositive * 100.0 / result.honests_tot
+
+		plt.figure(1)
+		plt.title("Detection Stat")
+		plt.text(-0.7,-1.2,str(result.scenario.provider_participation)+"% providers, "+str(result.scenario.intermidiaries_participation)+"% intermidiaries",fontsize=11)
+
+		#plt.text(-1, -1.2, 'fraud behaviour: '+str(result.getFraudBehaviour()), fontsize=12)
+
+		labels = 'detect','suspect', 'fn','fp', 'miss'
+		sizes = [detect, suspect, fn, fp, miss]
+		colors = ['yellowgreen', 'gold', 'lightcoral','crimson','lightskyblue']
+		#patches, texts = plt.pie(sizes, colors=colors, shadow=False, startangle=90)
+		#plt.legend(patches, labels, loc="best")
+		# Plot
+		labelspp = ['{0} - {1:1.2f} %'.format(i,j) for i,j in zip(labels, sizes)]
+
+		patches, texts = plt.pie(sizes, colors=colors, pctdistance=1.1, shadow=False, startangle=90)
+		plt.legend(patches, labelspp, loc="upper right", bbox_to_anchor=(1., 1.),fontsize=10)
+		#plt.text(0, 1.1, 'fraud behaviour: '+str(fraudBehaviour), fontsize=12)
+		plt.axis('equal')
+		plt.tight_layout()
+		plt.show()
+
+
+

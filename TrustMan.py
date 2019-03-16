@@ -34,7 +34,13 @@ class TrustMan(object):
 		self.frauds_detector_counter_ref = 0
 		self.accusations_counter_ref = 0 #conta quante accuse dovrebbero essere fatte nel sottoinsieme delle chiamate con frode rilevate
 		self.accusations_counter = 0 #conta quante accuse vengono effettivamente fatte a casua della non risposta degli intermediari
-		
+		self.transactions_counter = 0
+
+		self.fraudBehaviour = 0
+		self.accusationsAnalyzed = 0
+		self.fraudsAnalyzed = 0
+
+		'''
 		self.fraudsters = 0
 		self.suspected_fraudsters = 0
 		self.suspected_falsenegative = 0
@@ -47,10 +53,6 @@ class TrustMan(object):
 		self.falsepositive = 0
 		self.unknown_honests = 0
 
-		
-		self.fraudBehaviour = 0
-		self.accusationsAnalyzed = 0
-		self.fraudsAnalyzed = 0
 
 		self.fraudsters_detection = 0
 		self.fraudsters_detection_suspect = 0
@@ -61,8 +63,9 @@ class TrustMan(object):
 		self.honests_detection_suspect = 0
 		self.honests_detection_error  = 0
 		self.honests_detection_missing = 0
+		'''
 
-		self.threshold = 0
+		#self.threshold = 0
 
 
 
@@ -125,13 +128,16 @@ class TrustMan(object):
 							self.malicious_behaviour += 1 #le transazioni maligne fatte da un frodatre nel campione
 
 				if self.scenario.isCoopProvider(trace[Csv.TERMIN]) and not self.scenario.isFraud(trace[Csv.FRAUD]):
+					
 					origin = int(trace[Csv.ORIGIN])
 					nextop = int(trace[Csv.TRANSIT])
+					self.transactions_counter += 1
 					matrix[origin,nextop,POS]=matrix[origin,nextop,POS] + 1
 					for i in range(self.scenario.l_chain-1):
 						source = int(trace[Csv.TRANSIT+i])
 						target = int(trace[Csv.TRANSIT+i+1])
 						if self.scenario.isCoopIntermidiary(source):
+							self.transactions_counter += 1
 							#M[source][target][POS] = M[source][target][POS] + 1
 							matrix[source,target,POS] = matrix[source,target,POS] + 1
 							'''
@@ -147,8 +153,9 @@ class TrustMan(object):
 					origin = int(trace[Csv.ORIGIN])
 					nextop = int(trace[Csv.TRANSIT])
 					#M[origin][nextop][1] = M[origin][nextop][1] + 1
+					self.transactions_counter += 1
 					matrix[origin,nextop,NEG]=matrix[origin,nextop,NEG] + 1
-					if TrustConfig.pretrust_strategy and TrustConfig.l_cascade_agreements > 0 and not self.scenario.isFraudster(nextop) and matrix[origin,nextop,NEG]>0: #condizione sul valore positivo serve a evitare di avere valori negativi
+					if TrustConfig.pretrust_strategy and TrustConfig.l_cascade_agreements > 0 and matrix[origin,nextop,NEG]>0: #and not self.scenario.isFraudster(nextop): #condizione sul valore positivo serve a evitare di avere valori negativi
 						#M[origin][nextop][1] = M[origin][nextop][1] - 1
 						matrix[origin,nextop,NEG]=matrix[origin,nextop,NEG] - 1
 
@@ -160,6 +167,7 @@ class TrustMan(object):
 						if self.scenario.isCoopIntermidiary(source):
 							self.accusations_counter += 1
 							#M[source][target][1] = M[source][target][1] + 1
+							self.transactions_counter += 1
 							matrix[source,target,NEG] = matrix[source,target,NEG] + 1
 							#self.Revenue[target-self.scenario.n_providers] +=  TrustMan.calcRevenue()
 							#if TrustConfig.ref:
@@ -167,9 +175,12 @@ class TrustMan(object):
 							if TrustConfig.simmetry_strategy:			
 								#M[source][target][1] = M[source][target][1] - 1
 								#M[target][source][1] = M[target][source][1] - 1
-								if not self.scenario.isFraudster(target):
+							
+								#if not self.scenario.isFraudster(target):
+								#matrix[source,target,NEG] = matrix[source,target,NEG] -  1
+								#if not self.scenario.isFraudster(source) and 
+								if matrix[target,source,NEG]>=1 and matrix[source,target,NEG]>=1:
 									matrix[source,target,NEG] = matrix[source,target,NEG] -  1
-								if not self.scenario.isFraudster(source) and matrix[target,source,NEG]>=1:
 									matrix[target,source,NEG] = matrix[target,source,NEG] -  1
 							
 							if TrustConfig.pretrust_strategy and i < TrustConfig.l_cascade_agreements and not self.scenario.isFraudster(target) and matrix[source,target,NEG]>=1:  
@@ -345,8 +356,8 @@ class TrustMan(object):
 				prev_dataset = h5py.File(prev_dataset_path, 'a')
 
 				for j in range(self.scenario.N):
-					pos_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*0.5
-					neg_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*1.0
+					pos_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*TNSLAsettings.pos_forgetting_factor
+					neg_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*TNSLAsettings.neg_forgetting_factor
 
 					#np.array(curr_dataset['fback_matrix_updated'][:,j,0], dtype=np.float32)+= np.array(prev_dataset['fback_matrix'][:,j,0], dtype=np.float32)*(1.0/(1.0+i))
 					curr_dataset['fback_matrix_updated'][:,j,0] += np.array(prev_dataset['fback_matrix'][:,j,0]) * pos_forgetting_factor   #(1.0-(i/(cycle_deep+1)))
@@ -363,8 +374,7 @@ class TrustMan(object):
 
 
 
-
-	
+	'''
 	def fraudsterClassifier(self, data_in, outfile):
 
 
@@ -426,15 +436,14 @@ class TrustMan(object):
 					self.unknown_honests += 1
 	
 		self.fraudsters_detection = 100.0 * self.fraudsters / self.scenario.n_fraudsters
-		self.fraudsters_detection_suspect =  100.0 * self.suspected_fraudsters / self.scenario.n_fraudsters
-		self.fraudsters_detection_error = 100.0 * (self.falsenegative+self.suspected_falsenegative) / self.scenario.n_fraudsters
+		self.fraudsters_detection_suspect =  100.0 * (self.suspected_fraudsters+self.suspected_falsenegative) / self.scenario.n_fraudsters
+		self.fraudsters_detection_error = 100.0 * (self.falsenegative) / self.scenario.n_fraudsters
 		self.fraudsters_detection_missing = 100.0 * self.unknown_fraudsters / self.scenario.n_fraudsters
 		
 		self.honests_detection = 100.0 * self.honests / self.scenario.n_honests
-		self.honests_detection_suspect = 100.0 * self.suspected_honests / self.scenario.n_honests
-		self.honests_detection_error  = 100.0 * (self.falsepositive + self.suspected_falsepositive) / self.scenario.n_honests
+		self.honests_detection_suspect = 100.0 * (self.suspected_honests+self.suspected_falsepositive) / self.scenario.n_honests
+		self.honests_detection_error  = 100.0 * self.falsepositive / self.scenario.n_honests
 		self.honests_detection_missing = 100.0 * self.unknown_honests / self.scenario.n_honests
-
-
+	'''
 
 		
