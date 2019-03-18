@@ -6,6 +6,7 @@ class TraceGenerator:
    def __init__(self, scenario):
       super(TraceGenerator, self).__init__()
       self.scenario = scenario
+     
 
    def createCsv(self, file):
       f = open(file,'w')
@@ -52,8 +53,12 @@ class TraceGenerator:
          for node in nodes:
             trace = trace + ',' + str(node)
 
-         #new line, new trace
-         f.write(trace+'\n')
+         #punto1 - evito di scrivere le tracce con frodatore in blacklist
+         if fraud==1 and not self.scenario.isFraudster(nodes[len(nodes)-1]):
+            #print("-")
+            pass
+         else:
+            f.write(trace+'\n')
       #endfor
       f.close()
 
@@ -116,7 +121,7 @@ class TraceGenerator:
          #l_chain-1 nodes
          while count < (l_chain-1):
             node = random.randint(self.scenario.n_providers, self.scenario.n_providers + self.scenario.n_intermidiaries -1)
-            if not self.duplicateNodeInGroup(nodes,node):
+            if not self.isBlackListed(node):
                nodes.append(node)
                count = count +1
          lastnode = random.randint(self.scenario.n_providers, self.scenario.n_providers+self.scenario.n_intermidiaries-1)
@@ -130,7 +135,7 @@ class TraceGenerator:
          #l_chain-1 nodes
          while count < (l_chain-1):
             node = random.randint(self.scenario.n_providers, self.scenario.n_providers + self.scenario.n_intermidiaries - self.scenario.n_fraudsters -1)
-            if not self.duplicateNodeInGroup(nodes,node):
+            if not self.isBlackListed(node):
                nodes.append(node)
                count = count +1
          lastnode = random.randint(self.scenario.n_providers, self.scenario.n_providers+self.scenario.n_intermidiaries- self.scenario.n_fraudsters-1)
@@ -144,16 +149,29 @@ class TraceGenerator:
          #l_chain-1 nodes
          while count < (l_chain-1):
             node = random.randint(self.scenario.n_providers, self.scenario.n_providers + self.scenario.n_intermidiaries - self.scenario.n_fraudsters -1)
-            if not self.duplicateNodeInGroup(nodes,node):
+            if not self.isBlackListed(node):
                nodes.append(node)
                count = count +1
-         lastnode = random.randint(self.scenario.n_providers+self.scenario.n_intermidiaries - self.scenario.n_fraudsters, self.scenario.n_providers + self.scenario.n_intermidiaries -1)
-         nodes.append(lastnode)
 
+         lastnode = random.randint(self.scenario.n_providers+self.scenario.n_intermidiaries - self.scenario.n_fraudsters, self.scenario.n_providers + self.scenario.n_intermidiaries -1)
+         if not self.isBlackListed(lastnode):
+            nodes.append(lastnode)
+            #attenzione, controsenso la traccia è con frode, senza frodatore: risolta alla cazzo vedi punto1
       return nodes
 
-   def duplicateNodeInGroup(self, nodes, node):
-      return False
+   def isBlackListed(self, node):
+      if not TrustConfig.use_tmp_blacklist:
+         return False
+      else:
+         if node in self.scenario.blacklist:
+            #print("Exclude from trace node: " + str(node))
+            return True
+         return False
+
+
+
+
+
       """
       if TrustConfig.clustering_strategy == False:
          return False

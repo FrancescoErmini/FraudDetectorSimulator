@@ -20,6 +20,7 @@ class Scenario:
       self.n_honests = self.n_intermidiaries - self.n_fraudsters
       self.N = n_providers + n_intermidiaries
       self.cycles = cycles
+      self.blacklist = []
       
 
 
@@ -94,6 +95,14 @@ class Scenario:
          return True
       else:
          return False
+
+   def push_in_blacklist(self, index):
+      
+      self.blacklist.append(index)
+
+   def reset_blacklist(self):
+
+      del self.blacklist[:]
 
 
 

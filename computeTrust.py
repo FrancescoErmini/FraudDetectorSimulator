@@ -5,7 +5,7 @@ import random
 
 from TrustMan import *
 from TraceGenerator import *
-from config import Tools
+from config import *
 from EigenTrust import *
 from Scenario import Scenario
 from TNSLA import *
@@ -72,12 +72,17 @@ def main():
 		
 
 	#matrix cycles x targets 
-	results = np.zeros((cycles,len(targets)))
+	results = np.zeros((cycles,len(targets))) #tmp, cambia col source attenzione!
+	
+
+
+
 	honests_score_avg = np.zeros(cycles)
 	fraudsters_score_avg = np.zeros(cycles)
 
 
 	for c in range(cycles):
+
 
 		scenario_directory = 'simulation/' + args.scenario
 
@@ -89,8 +94,14 @@ def main():
 		dataset.destroy()
 		dataset.create()
 
+
 		traceGenerator = TraceGenerator(scenario=scenario)
 		traceGenerator.createCsv(file=trace_file)
+
+		scenario.reset_blacklist()
+		
+	
+
 
 
 		manager = TrustMan(scenario=scenario, dataset=dataset)
@@ -122,8 +133,15 @@ def main():
 				for j in range(len(sources)):
 					if scenario.isCoopProvider(sources[j]):
 						results[c][i] = trust.computeTrust2(sources[j], targets[i])
+
 						#print("\nTrust from "+str(sources[j])+" to "+str(targets[i])+" at period "+str(c)+"th is "+str(results[c][i]))
-						result.fraudsterClassifier2(targets[i], results[c][i])
+						res = result.fraudsterClassifier2(targets[i], results[c][i])
+						if res: #is Fraudster
+							scenario.push_in_blacklist(targets[i])
+
+
+
+						
 			
 
 		else:

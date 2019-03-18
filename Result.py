@@ -57,7 +57,7 @@ class Result:
 		self.accusationsAnalyzed = manager.accusationsAnalyzed
 		self.fraudsAnalyzed = manager.fraudsAnalyzed
 		"""
-
+	'''
 	def fraudsterClassifier(self, targets, trust_scores):
 
 		avg = np.mean(trust_scores)
@@ -125,12 +125,14 @@ class Result:
 		self.honests_detection_error  = 100.0 * self.falsepositive / self.scenario.n_honests
 		self.honests_detection_missing = 100.0 * self.unknown_honests / self.scenario.n_honests
 
-
+	'''
 
 
 	def fraudsterClassifier2(self, target, trust_score):
 		i = target
+		
 		if self.scenario.isFraudster(target):
+			
 			self.fraudsters_tot += 1
 			if trust_score < 0.5:
 				#print("fraudster is: " + str(i+self.scenario.n_providers) + " with score values: " +  str(Tscore[i]) +"<"+str(self.threshold))
@@ -165,6 +167,11 @@ class Result:
 			if trust_score == 0.5:
 
 				self.unknown_honests += 1
+
+		res = False
+		if trust_score < 0.5:
+			res = True
+		return res
 
 
 

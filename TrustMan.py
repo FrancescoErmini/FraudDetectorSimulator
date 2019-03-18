@@ -189,8 +189,10 @@ class TrustMan(object):
 						
 		
 
-
-		self.fraudBehaviour = 100.0*self.malicious_behaviour/(self.malicious_behaviour+self.disguised_behaviour)
+		try:
+			self.fraudBehaviour = 100.0*self.malicious_behaviour/(self.malicious_behaviour+self.disguised_behaviour)
+		except ZeroDivisionError:
+			self.fraudBehaviour = 0
 		try:
 			self.accusationsAnalyzed = int(100.0*self.accusations_counter/self.accusations_counter_ref) #tasso di risposta per nodi transizione nel campione
 		except ZeroDivisionError:

@@ -46,6 +46,7 @@ class TrustConfig:
 	pretrust_strategy = False
 	simmetry_strategy = True
 	l_cascade_agreements = 1 # minore di l_chain 1,2,3
+	use_tmp_blacklist = True
 	#clustering_strategy = 1
 
 class TNSLAsettings:
