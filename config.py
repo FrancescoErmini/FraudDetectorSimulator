@@ -54,7 +54,7 @@ class TNSLAsettings:
 	pos_forgetting_factor = 0.1
 	neg_forgetting_factor = 1.0
 	pretrust_agreements = 4
-	use_pretrust = True
+	use_pretrust = False
 
 
 
