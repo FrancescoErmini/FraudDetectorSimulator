@@ -97,12 +97,14 @@ class Scenario:
          return False
 
    def push_in_blacklist(self, index):
-      
-      self.blacklist.append(index)
+      #avoid put index twice
+      if index not in self.blacklist:
+
+         self.blacklist.append(index)
 
    def reset_blacklist(self):
 
-      del self.blacklist[:]
+      self.blacklist = []
 
 
 

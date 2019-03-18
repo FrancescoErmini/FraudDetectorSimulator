@@ -58,7 +58,7 @@ def main():
 
 	sources = [x for x in range(0,scenario.n_providers,10)]
 	#targets = [(random.randint(200,599)) for x in range(20)]
-	step = 1
+	step = 10
 	targets = [(x+scenario.n_providers) for x in range(0,scenario.n_intermidiaries,step)] #80 targets
 	for f in range(scenario.n_fraudsters):
 		targets[scenario.n_intermidiaries//step-f-1] = N-f-1
@@ -95,10 +95,17 @@ def main():
 		dataset.create()
 
 
+
+		if c%2 == 0:
+			scenario.reset_blacklist()
+			
+		print("Blacklisted operators are:")
+		print(scenario.blacklist)
+
 		traceGenerator = TraceGenerator(scenario=scenario)
 		traceGenerator.createCsv(file=trace_file)
 
-		scenario.reset_blacklist()
+		
 		
 	
 
