@@ -224,7 +224,7 @@ class Result:
 		print("honests detection missing: "+str(self.honests_detection_missing))
 		'''
 
-
+	'''
 	def storeStat(self, file):
 
 		with open(file, "w") as text_file:
@@ -243,12 +243,12 @@ class Result:
 				print(f"pretrust strategy: {str(TrustConfig.pretrust_strategy)} with {str(TrustConfig.l_cascade_agreements)} / {str(self.scenario.l_chain)}", file=text_file)
 				
 				print(f"\nTRACE ANALISYS", file=text_file)
-				'''
+				
 				self.frauds_detector_counter = 0 #conta quante chiamate con frode sono effettivamente valutate a casusa della non risposta del terminator
-		self.frauds_detector_counter_ref = 0
-		self.accusations_counter_ref = 0 #conta quante accuse dovrebbero essere fatte nel sottoinsieme delle chiamate con frode rilevate
-		self.accusations_counter = 0 #co
-				'''
+				self.frauds_detector_counter_ref = 0
+				self.accusations_counter_ref = 0 #conta quante accuse dovrebbero essere fatte nel sottoinsieme delle chiamate con frode rilevate
+				self.accusations_counter = 0 #co
+				
 				print(f"fraud detector counter: {str(self.manager.frauds_detector_counter)}", file=text_file)
 				print(f"fraud detector counter ref: {str(self.manager.frauds_detector_counter_ref)}", file=text_file)
 				print(f"accusations counter: {str(self.manager.accusations_counter)}", file=text_file)
@@ -284,7 +284,7 @@ class Result:
 				print(f"honests detection suspect: {str(self.manager.honests_detection_suspect)}%", file=text_file)
 				print(f"honests detection error: {str(self.manager.honests_detection_error)}%", file=text_file)
 				print(f"honests detection missing: {str(self.manager.honests_detection_missing)}%", file=text_file)
-
+	'''
 	def printTrustScores(self,data_in):
 
 		dataset = h5py.File(self.dataset.dataset, 'a')
