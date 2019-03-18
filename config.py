@@ -42,7 +42,7 @@ class TraceConfig:
 
 class TrustConfig:
 
-	fraudsters_camouflage = True
+	fraudsters_camouflage = False
 	pretrust_strategy = False
 	simmetry_strategy = True
 	l_cascade_agreements = 1 # minore di l_chain 1,2,3
@@ -53,6 +53,8 @@ class TNSLAsettings:
 	cycle_deep_max = 10
 	pos_forgetting_factor = 0.1
 	neg_forgetting_factor = 1.0
+	pretrust_agreements = 4
+	use_pretrust = True
 
 
 

@@ -99,7 +99,7 @@ class Plot():
 	def trustScore(self, honests_score_avg, fraudsters_score_avg,fraudBehaviour):
 		N = len(honests_score_avg)
 		ind = np.arange(N)  # the x locations for the groups
-		width = 0.1   # the width of the bars
+		width = 0.9   # the width of the bars
 		fig, ax = plt.subplots()
 		rects1 = ax.bar(ind-width/2, honests_score_avg, width, color='green')
 		rects2 = ax.bar(ind+width/2, fraudsters_score_avg, width, color='red')

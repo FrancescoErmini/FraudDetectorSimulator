@@ -71,7 +71,7 @@ class TNSLA():
 
 		if pos > 10 or neg > 10:
 			#A has direct feedback over B, then compute directly A opion over B
-			opinion_A_B = self.edit(pos, neg, self.pretrust[B])
+			opinion_A_B = self.edit(pos, neg, self.hasPreTrust(A,B))
 			#store A opinion over B in the opinion matrix
 			self.storeOpinion(A,B,opinion_A_B)
 			print(str(A)+" has direct opinion over "+str(B))
@@ -92,16 +92,16 @@ class TNSLA():
 				neg_i_B = fback_from_A[i][B][TNSLA.NEG]
 
 				
-				if self.eval(self.edit(pos_A_i,neg_A_i, self.pretrust[i])) > trustee_score and self.eval(self.edit(pos_i_B,neg_i_B,self.pretrust[B]))!= 0.5:			
+				if self.eval(self.edit(pos_A_i,neg_A_i, self.hasPreTrust(A,i))) > trustee_score and self.eval(self.edit(pos_i_B,neg_i_B,self.hasPreTrust(i,B)))!= 0.5:			
 
 					#print("A "+str(A)+" best trustee for B "+str(B)+" is T "+str(i)+" with pretrust="+str(self.pretrust[i])+", posAi="+str(pos_A_i)+", negAi="+str(neg_A_i)+", posiB="+str(pos_i_B)+", negiB="+str(neg_i_B))
 					if trustee_count == 0:
 						#update new trustee values
-						opinion_A_i = self.edit(pos_A_i,neg_A_i,self.pretrust[i])
-						opinion_i_B = self.edit(pos_i_B,neg_i_B, self.pretrust[B])
+						opinion_A_i = self.edit(pos_A_i,neg_A_i,self.hasPreTrust(A,i))
+						opinion_i_B = self.edit(pos_i_B,neg_i_B,self.hasPreTrust(i,B))
 					else:
-						opinion_A_i = self.consensus(opinion_A_i, self.edit(pos_A_i,neg_A_i, self.pretrust[i]))
-						opinion_i_B = self.consensus(opinion_i_B, self.edit(pos_i_B,neg_i_B, self.pretrust[B]))
+						opinion_A_i = self.consensus(opinion_A_i, self.edit(pos_A_i,neg_A_i, self.hasPreTrust(A,i)))
+						opinion_i_B = self.consensus(opinion_i_B, self.edit(pos_i_B,neg_i_B, self.hasPreTrust(i,B)))
 						#opinion_A_i = self.edit(pos_A_i,neg_A_i, self.pretrust[i])
 						#opinion_i_B = self.edit(pos_i_B,neg_i_B, self.pretrust[B])
 					#trustee_score = self.eval(opinion_A_i)
@@ -160,7 +160,7 @@ class TNSLA():
 				if pos_j_target > 0 or neg_j_target > 0:
 
 					
-						opinion_j_target = self.edit(pos_j_target, neg_j_target, self.pretrust[target])
+						opinion_j_target = self.edit(pos_j_target, neg_j_target, 0.5)
 						opinion_all_target = self.consensus(opinion_all_target, opinion_j_target)
 		
 		if neg_counter > 100 or pos_counter > 100:
@@ -338,6 +338,29 @@ class TNSLA():
 		#double uncertainty = this.d + this.u + (this.b * that.u);
 		opinion_res[TNSLA.a] = a2
 		return opinion_res
+
+	def hasPreTrust(self, source, target):
+		if TNSLAsettings.use_pretrust == False:
+			return 0.5
+		if self.scenario.isFraudster(target):
+			return 0.5
+		if not self.scenario.isCoopIntermidiary(target):
+			return 0.5
+		if not self.scenario.isCoopProvider(target):
+			return 0.5
+
+		if self.scenario.isProvider(source):
+			#source ha accordi con 4 intermediari che hanno id 
+			if target in range(self.scenario.n_providers+source, self.scenario.n_providers+source+4):
+				
+				return 1.0
+			#se target è un operatore con id vicino, vuol dire che operano nello stesso paese si conoscono e si fidano
+			if target in range(source,source+2):
+				
+				return 1.0
+
+		return 0.5
+
 
 
 	def printOpinion(opinion):

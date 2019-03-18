@@ -42,6 +42,17 @@ class Scenario:
       else:
          return False
 
+   def isProvider(self, index):
+
+      ind = int(index)
+      low = 0
+      up =  self.n_providers
+      
+      if ind in range(low,up):
+         return True
+      else:
+         return False
+
    def isFraudster(self, index):
 
       ind = int(index)
@@ -83,3 +94,7 @@ class Scenario:
          return True
       else:
          return False
+
+
+
+

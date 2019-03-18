@@ -58,11 +58,12 @@ def main():
 
 	sources = [x for x in range(0,scenario.n_providers,10)]
 	#targets = [(random.randint(200,599)) for x in range(20)]
-	targets = [(x+scenario.n_providers) for x in range(0,scenario.n_intermidiaries,10)]
-	targets[scenario.n_intermidiaries//10-1] = 599
-	targets[scenario.n_intermidiaries//10-2] = 598
-	targets[scenario.n_intermidiaries//10-3] = 597
-	targets[scenario.n_intermidiaries//10-4] = 596
+	step = 1
+	targets = [(x+scenario.n_providers) for x in range(0,scenario.n_intermidiaries,step)] #80 targets
+	for f in range(scenario.n_fraudsters):
+		targets[scenario.n_intermidiaries//step-f-1] = N-f-1
+	
+
 	"""
 	
 	if general:
@@ -108,42 +109,48 @@ def main():
 		trust = TNSLA(scenario=scenario, dataset=dataset)
 		trust.initialize()
 
+		
+		if not general:
+			for i in range(len(targets)):
+				Tools.printProgress( i, len(targets))
+				"""
+				if general:
 
-		for i in range(len(targets)):
-			Tools.printProgress( i, len(targets))
-			"""
-			if general:
+					results[c][i] = trust.computeTrust(targets[i])
+				else:
+				"""
+				for j in range(len(sources)):
+					if scenario.isCoopProvider(sources[j]):
+						results[c][i] = trust.computeTrust2(sources[j], targets[i])
+						#print("\nTrust from "+str(sources[j])+" to "+str(targets[i])+" at period "+str(c)+"th is "+str(results[c][i]))
+						result.fraudsterClassifier2(targets[i], results[c][i])
+			
 
+		else:
+			for i in range(len(targets)):
+				Tools.printProgress( i, len(targets))
 				results[c][i] = trust.computeTrust(targets[i])
-			else:
-			"""
-			for j in range(len(sources)):
-				if scenario.isCoopProvider(sources[j]):
-					results[c][i] = trust.computeTrust2(sources[j], targets[i])
-					#print("\nTrust from "+str(sources[j])+" to "+str(targets[i])+" at period "+str(c)+"th is "+str(results[c][i]))
-					result.fraudsterClassifier2(targets[i], results[c][i])
-		result.printRes()
-		"""
-		if general:
+				result.fraudsterClassifier2(targets[i], results[c][i])
+
 			r = result.printTrustAvg(targets, results[c])
 			honests_score_avg[c] = r[0]
 			fraudsters_score_avg[c] = r[1]
-		"""
-	
-	plot = Plot(scenario=scenario)
-	"""
-	if general:
-		result.fraudsterClassifier(targets, results[cycles-1])
-		result.printRes()
-		plot.statistics(result=result)
-		#plot.trustScore(honests_score_avg, fraudsters_score_avg, result.getFraudBehaviour())
-	else:
-	"""
-		#fa solo i res dell utlimo ciclo!!
-	#result.printRes()
-	plot.plotPie(result)
-		#plot.transitivity(targets=targets,results=results)
 
+				
+			
+		result.printRes()
+			
+
+
+
+
+	plot = Plot(scenario=scenario)
+
+	if not general:
+		plot.plotPie(result)
+	else:
+		#plot.statistics(result=result)
+		plot.trustScore(honests_score_avg,fraudsters_score_avg, result.getFraudBehaviour())
 
 '''
 def saveSetting(self, sim_root):
