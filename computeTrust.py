@@ -96,7 +96,7 @@ def main():
 
 
 
-		if c%2 == 0:
+		if c%2 == 0 and TrustConfig.use_tmp_blacklist:
 			scenario.reset_blacklist()
 
 		print("Blacklisted operators are:")
@@ -143,7 +143,7 @@ def main():
 
 						#print("\nTrust from "+str(sources[j])+" to "+str(targets[i])+" at period "+str(c)+"th is "+str(results[c][i]))
 						res = result.fraudsterClassifier2(targets[i], results[c][i])
-						if res: #is Fraudster
+						if res and TrustConfig.use_tmp_blacklist: #is Fraudster
 							scenario.push_in_blacklist(targets[i])
 
 
