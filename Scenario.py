@@ -21,6 +21,9 @@ class Scenario:
       self.N = n_providers + n_intermidiaries
       self.cycles = cycles
       self.blacklist = []
+      self.revenue_termin = 0
+      self.revenue_transit = 0
+      self.revenue_fraudster = 0 
       
 
 
@@ -101,6 +104,13 @@ class Scenario:
       if index not in self.blacklist:
 
          self.blacklist.append(index)
+
+   def fullfill_blacklist(self):
+      low = self.n_providers+self.n_intermidiaries-self.n_fraudsters
+      up =  self.n_providers+self.n_intermidiaries
+
+      for i in range(low, up):
+         self.blacklist.append(i)
 
    def reset_blacklist(self):
 

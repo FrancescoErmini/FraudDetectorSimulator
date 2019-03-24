@@ -19,21 +19,21 @@ def main():
 
 	parser = argparse.ArgumentParser(prog='TRACES GENERATOR')
 	#abs params
-	parser.add_argument('--providers', metavar='N', type=int, help="N - total number of local telco providers" )
+	parser.add_argument('--providers',  type=int, help="Number of local telco providers" )
 	#parser.add_argument('--intermidiaries', nargs=2, metavar=('N', 'F'), type=int,help="N - total number of intermidiary providers. F - number of estimated fraudsters providers" )
 	#parser.add_argument('--calls', nargs=2, metavar=('N', 'F'), type=int,help="N - total number of calls. F - number of estimated fraud calls" )
-	parser.add_argument('--intermidiaries',type=int, help="N - total number of intermidiary providers. F - number of estimated fraudsters providers" )
-	parser.add_argument('--calls', type=int, help="N - total number of calls. F - number of estimated fraud calls" )
-	parser.add_argument('--hops', type=int, help="Average hops per call" )
+	parser.add_argument('--intermidiaries', type=int, help="Number of intermidiary providers" )
+	parser.add_argument('--calls', type=int, help="Number of calls" )
+	parser.add_argument('--hops', type=int, help="Numer of hops per call" )
 
 	#percentage params
-	parser.add_argument('--fraudsters', type=float, help="Percentage of fraudolent intemidiaraies, estimated fraudsters providers" )
+	parser.add_argument('--fraudsters', type=float, help="Percentage of fraudolent intemidiaraies" )
 	parser.add_argument('--frauds', type=float, help="Percentage of fraud calls. " )
 	parser.add_argument('--pcoop', type=float, help="Percentage of cooperation provider " )
 	parser.add_argument('--icoop', type=float, help="Percentage of cooperation intermidiaries. " )
+	parser.add_argument('--cycles', type=int, help="Number of traces to simulate" )
 
 	parser.add_argument('--scenario', help="Name of the simulation directory" )
-	parser.add_argument('--cycles', type=int, help="Number of different traces" )
 
 	args = parser.parse_args()
 
@@ -80,6 +80,8 @@ def main():
 	honests_score_avg = np.zeros(cycles)
 	fraudsters_score_avg = np.zeros(cycles)
 
+	#àscenario.fullfill_blacklist()
+
 
 	for c in range(cycles):
 
@@ -97,6 +99,7 @@ def main():
 
 
 		if c%2 == 0 and TrustConfig.use_tmp_blacklist:
+			#if c > 4: #simulo l'ingresso ritardato
 			scenario.reset_blacklist()
 
 		print("Blacklisted operators are:")
@@ -107,7 +110,7 @@ def main():
 
 		
 		
-	
+		
 
 
 
@@ -122,10 +125,11 @@ def main():
 		#trust = EigenTrust(scenario=scenario)
 
 		result = Result(scenario=scenario,dataset=dataset, manager=manager)
+
 		#result.printFeedback(targets)
 
 		trust = TNSLA(scenario=scenario, dataset=dataset)
-		trust.initialize()
+		#trust.initialize()
 
 		
 		if not general:
@@ -167,7 +171,10 @@ def main():
 			
 
 
-
+	print("REVENUES")
+	print("termin"+str(scenario.revenue_termin))
+	print("transit"+str(scenario.revenue_transit))
+	print("fraudster"+str(scenario.revenue_fraudster))
 
 	plot = Plot(scenario=scenario)
 

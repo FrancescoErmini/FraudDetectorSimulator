@@ -40,6 +40,8 @@ class TrustMan(object):
 		self.accusationsAnalyzed = 0
 		self.fraudsAnalyzed = 0
 
+
+
 		'''
 		self.fraudsters = 0
 		self.suspected_fraudsters = 0
@@ -113,6 +115,8 @@ class TrustMan(object):
 				Tools.printProgress( count, self.scenario.n_calls)
 				count+=1
 
+				self.calcRevenue(trace)
+
 				#self.measure_fraudsters_behaviour(trace)
 
 				if self.scenario.isFraud(trace[Csv.FRAUD]):
@@ -123,8 +127,11 @@ class TrustMan(object):
 					ind=int(trace[Csv.TRANSIT+i])					
 					if self.scenario.isFraudster(ind):
 						if not self.scenario.isFraud(trace[Csv.FRAUD]):
+
 							self.disguised_behaviour += 1 #le transazioni buone fatte da un frodatre nel campione
+						
 						else:
+
 							self.malicious_behaviour += 1 #le transazioni maligne fatte da un frodatre nel campione
 
 				if self.scenario.isCoopProvider(trace[Csv.TERMIN]) and not self.scenario.isFraud(trace[Csv.FRAUD]):
@@ -322,14 +329,10 @@ class TrustMan(object):
 
 
 
+
 	def updateFeedbackMatrix(self, scenario_directory, cycle):
 		
 		cycle_deep_max = TNSLAsettings.cycle_deep_max
-
-		
-
-		
-
 
 		if cycle > cycle_deep_max:
 			cycle_deep = cycle_deep_max
@@ -340,12 +343,6 @@ class TrustMan(object):
 			cycle_deep = 0
 		
 		try:
-			"""
-			if cycle == 0:
-				curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
-				curr_dataset = h5py.File(curr_dataset_path, 'a')
-				curr_dataset['fback_matrix'][:] = curr_dataset['fback_matrix_updated'][:]
-			"""	
 
 			curr_dataset_path = scenario_directory+'/'+str(cycle)+'/dataset.hdf5'
 			curr_dataset = h5py.File(curr_dataset_path, 'a')
@@ -358,10 +355,10 @@ class TrustMan(object):
 				prev_dataset = h5py.File(prev_dataset_path, 'a')
 
 				for j in range(self.scenario.N):
+
 					pos_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*TNSLAsettings.pos_forgetting_factor
 					neg_forgetting_factor = ((cycle_deep_max-i-1)/cycle_deep_max)*TNSLAsettings.neg_forgetting_factor
 
-					#np.array(curr_dataset['fback_matrix_updated'][:,j,0], dtype=np.float32)+= np.array(prev_dataset['fback_matrix'][:,j,0], dtype=np.float32)*(1.0/(1.0+i))
 					curr_dataset['fback_matrix_updated'][:,j,0] += np.array(prev_dataset['fback_matrix'][:,j,0]) * pos_forgetting_factor   #(1.0-(i/(cycle_deep+1)))
 					curr_dataset['fback_matrix_updated'][:,j,1] += np.array(prev_dataset['fback_matrix'][:,j,1]) * neg_forgetting_factor #(1.0-(i/(cycle_deep+2)))
 
@@ -371,7 +368,14 @@ class TrustMan(object):
 		
 
 
+	def calcRevenue(self, trace):
 
+		if not self.scenario.isFraud(trace[Csv.FRAUD]):
+			self.scenario.revenue_termin  +=TraceConfig.termin_tariff*TraceConfig.average_call_duration
+			self.scenario.revenue_transit += TraceConfig.transit_tariff*TraceConfig.average_call_duration*self.scenario.l_chain
+		else:
+			self.scenario.revenue_fraudster += TraceConfig.bypass_tariff*TraceConfig.average_call_duration
+			self.scenario.revenue_transit += TraceConfig.transit_tariff*TraceConfig.average_call_duration*(self.scenario.l_chain-1)
 
 
 

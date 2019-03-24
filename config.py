@@ -11,8 +11,12 @@ class TraceConfig:
 	terminating_traffic = 180000000
 	min_per_day = 60*24
 	average_call_duration = 6 #Average call duration
-	n_calls_per_min = 694
+	n_calls_per_min = 167 #240
 
+
+	termin_tariff = 0.15
+	transit_tariff = 0.007
+	bypass_tariff = 0.10
 	#fraudsters_providers_percentage = 1 #5%degli intermediari
 	#fraud_traffic_percentage = 
 	
@@ -46,7 +50,7 @@ class TrustConfig:
 	pretrust_strategy = False
 	simmetry_strategy = True
 	l_cascade_agreements = 1 # minore di l_chain 1,2,3
-	use_tmp_blacklist = False
+	use_tmp_blacklist = True
 	#clustering_strategy = 1
 
 class TNSLAsettings:
