@@ -58,7 +58,7 @@ def main():
 
 	sources = [x for x in range(0,scenario.n_providers,10)]
 	#targets = [(random.randint(200,599)) for x in range(20)]
-	step = 1
+	step = 10
 	targets = [(x+scenario.n_providers) for x in range(0,scenario.n_intermidiaries,step)] #80 targets
 	for f in range(scenario.n_fraudsters):
 		targets[scenario.n_intermidiaries//step-f-1] = N-f-1
@@ -79,6 +79,8 @@ def main():
 
 	honests_score_avg = np.zeros(cycles)
 	fraudsters_score_avg = np.zeros(cycles)
+
+	revenues = np.zeros((3,cycles))
 
 	#àscenario.fullfill_blacklist()
 
@@ -168,18 +170,23 @@ def main():
 				
 			
 		result.printRes()
+		revenues[0][c]=scenario.revenue_termin//(scenario.n_providers//2)
+		revenues[1][c]=scenario.revenue_transit//scenario.n_intermidiaries
+		revenues[2][c]=scenario.revenue_fraudster//scenario.n_fraudsters
+
 			
 
 
-	print("REVENUES")
-	print("termin"+str(scenario.revenue_termin))
-	print("transit"+str(scenario.revenue_transit))
-	print("fraudster"+str(scenario.revenue_fraudster))
+		print("REVENUES")
+		print("termin"+str(revenues[0][c]))
+		print("transit"+str(revenues[1][c]))
+		print("fraudster"+str(revenues[2][c]))
 
 	plot = Plot(scenario=scenario)
 
 	if not general:
-		plot.plotPie(result)
+		#plot.plotPie(result)
+		plot.plotBars2(revenues)
 	else:
 		#plot.statistics(result=result)
 		plot.trustScore(honests_score_avg,fraudsters_score_avg, result.getFraudBehaviour())

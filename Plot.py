@@ -144,5 +144,55 @@ class Plot():
 		plt.tight_layout()
 		plt.show()
 
+	def plotBars(self, revenues):
+
+		N = self.scenario.cycles
+		ind = np.arange(N)  # the x locations for the groups
+		width = 0.3   # the width of the bars
+		fig, ax = plt.subplots()
+		rects1 = ax.bar(ind+width*0, revenues[0], width, color='yellowgreen', yerr=0)
+		rects2 = ax.bar(ind+width*1, revenues[1], width, color='lightskyblue', yerr=1)
+		rects3 = ax.bar(ind+2*width, revenues[2], width, color='lightcoral', yerr=2)
+		#rects5 = ax.bar(ind+3*width, fraudRevenuePercentage, width, color='r', yerr=3)
+		ax.set_ylabel('profits')
+		ax.set_xlabel('cycles')
+		#ax.set_title('global repution')
+		ax.legend((rects1[0], rects2[0], rects3[0]), ('termin', 'transit','fraudsters'), bbox_to_anchor=(1.0,1.0))
+		#plt.plot([-width, N-1+width], [0.5, 0.5], "k--")
+		#plt.plot([-width, N-1+width], [TNSLAsettings.trustee_score, TNSLAsettings.trustee_score], "k--")
+		#plt.text(0, 1.1, 'fraud behaviour: '+str(fraudBehaviour), fontsize=12)
+		plt.tight_layout()
+		plt.show()
+
+	def plotBars2(self, revenues):
+		x = [i for i in range(self.scenario.cycles)]
+
+		df=pd.DataFrame({'x': x, 'n1': revenues[0,:], 'n2': revenues[1,:], 'n3': revenues[2,:]})
+		# style
+		plt.style.use('seaborn')#-darkgrid
+		# create a color palette
+		palette = plt.get_cmap('Set1')
+		# multiple line plot
+		num=0
+		for column in df.drop('x', axis=1):
+			
+			plt.plot(df['x'], df[column], marker='', color=self.getColor(num), linewidth=1, alpha=0.9, label=column)
+			num+=1
+		plt.tight_layout()
+		plt.show()
+
+	def getColor(self, num):
+		#colors = ['yellowgreen', 'gold', 'lightcoral', 'lightskyblue']
+		
+		if num == 0:
+			return 'yellowgreen' #termin
+		
+		if num == 1:
+			return 'lightskyblue' #transit
+
+		if num == 2:
+			return 'lightcoral' #fraudster
+
+
 
 
