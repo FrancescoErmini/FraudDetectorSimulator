@@ -170,7 +170,7 @@ def main():
 				
 			
 		result.printRes()
-		revenues[0][c]=scenario.revenue_termin//(scenario.n_providers//2)
+		revenues[0][c]=scenario.revenue_termin//(scenario.n_providers)
 		revenues[1][c]=scenario.revenue_transit//scenario.n_intermidiaries
 		revenues[2][c]=scenario.revenue_fraudster//scenario.n_fraudsters
 
