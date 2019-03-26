@@ -370,12 +370,19 @@ class TrustMan(object):
 
 	def calcRevenue(self, trace):
 
+		termination_charges_international_pstn = 0.23 #local tariff 
+		termination_charges_local_pstn = 0.10
+		termination_charges_isp = 0.10 #international from ISPA to ISPB (international)
+		#endogenous_charges = 0.1693
+
+
 		if not self.scenario.isFraud(trace[Csv.FRAUD]):
-			self.scenario.revenue_termin  +=TraceConfig.termin_tariff*TraceConfig.average_call_duration
-			self.scenario.revenue_transit += TraceConfig.transit_tariff*TraceConfig.average_call_duration*self.scenario.l_chain
+			self.scenario.revenue_termin  += termination_charges_international_pstn*TraceConfig.average_call_duration
+			self.scenario.revenue_transit +=  termination_charges_isp*TraceConfig.average_call_duration
 		else:
-			self.scenario.revenue_fraudster += TraceConfig.bypass_tariff*TraceConfig.average_call_duration
-			self.scenario.revenue_transit += TraceConfig.transit_tariff*TraceConfig.average_call_duration*(self.scenario.l_chain-1)
+			self.scenario.revenue_termin += termination_charges_local_pstn*TraceConfig.average_call_duration
+			self.scenario.revenue_fraudster += (termination_charges_international_pstn-termination_charges_local_pstn)*TraceConfig.average_call_duration
+			self.scenario.revenue_transit += (termination_charges_isp*TraceConfig.average_call_duration/self.scenario.l_chain)*(self.scenario.l_chain-1)
 
 
 

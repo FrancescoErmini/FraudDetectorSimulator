@@ -14,9 +14,9 @@ class TraceConfig:
 	n_calls_per_min = 167 #240
 
 
-	termin_tariff = 0.15
-	transit_tariff = 0.007
-	bypass_tariff = 0.10
+	international_tariff = 0.15
+	transit_fee = 1
+	local_tariff = 0.10
 	#fraudsters_providers_percentage = 1 #5%degli intermediari
 	#fraud_traffic_percentage = 
 	

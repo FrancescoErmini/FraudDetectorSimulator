@@ -167,31 +167,38 @@ class Plot():
 	def plotBars2(self, revenues):
 		x = [i for i in range(self.scenario.cycles)]
 
-		df=pd.DataFrame({'x': x, 'n1': revenues[0,:], 'n2': revenues[1,:], 'n3': revenues[2,:]})
+		df=pd.DataFrame({'x': x, 'Termin': revenues[0,:], 'Transit': revenues[1,:], 'Fraud': revenues[2,:]})
 		# style
-		plt.style.use('seaborn')#-darkgrid
+		#plt.style.use('seaborn')#-darkgrid
 		# create a color palette
 		palette = plt.get_cmap('Set1')
 		# multiple line plot
 		num=0
 		for column in df.drop('x', axis=1):
 			
-			plt.plot(df['x'], df[column], marker='', color=self.getColor(num), linewidth=1, alpha=0.9, label=column)
+			plt.plot(df['x'], df[column], marker='', color=self.getColor(num), linewidth=2, alpha=0.9, label=column)
 			num+=1
-		plt.tight_layout()
+
+		plt.legend(loc='bottom center', bbox_to_anchor=(0.5, -0.1), shadow=True, fancybox=True,ncol=4, borderaxespad=0.)
+		#plt.legend(loc=2, bbox_to_anchor=[0, 1], ncol=2, shadow=True, title="Legend", fancybox=True)
+		# Add titles
+		#plt.title("Trust transitivity cases", loc='left', fontsize=12, fontweight=0, color='black')
+		plt.xlabel("cycles")
+		plt.ylabel("absolute revenues")
+		#plt.tight_layout()
 		plt.show()
 
 	def getColor(self, num):
 		#colors = ['yellowgreen', 'gold', 'lightcoral', 'lightskyblue']
 		
 		if num == 0:
-			return 'yellowgreen' #termin
+			return 'green' #termin
 		
 		if num == 1:
-			return 'lightskyblue' #transit
+			return 'blue' #transit
 
 		if num == 2:
-			return 'lightcoral' #fraudster
+			return 'red' #fraudster
 
 
 
