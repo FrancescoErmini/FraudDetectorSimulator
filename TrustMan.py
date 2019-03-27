@@ -370,9 +370,9 @@ class TrustMan(object):
 
 	def calcRevenue(self, trace):
 
-		termination_charges_international_pstn = 0.23 #local tariff 
+		termination_charges_international_pstn = 0.15 #local tariff 
 		termination_charges_local_pstn = 0.10
-		termination_charges_isp = 0.10 #international from ISPA to ISPB (international)
+		termination_charges_isp = 0.4 #international from ISPA to ISPB (international)
 		#endogenous_charges = 0.1693
 
 

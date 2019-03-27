@@ -47,7 +47,7 @@ class Plot():
 		plt.text(self.scenario.cycles-2, TNSLAsettings.trustee_score+0.01, 'honests', fontsize=12)
 		# Add legend
 		#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=4, ncol=4, mode="expand", borderaxespad=0.)
-		plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.1), shadow=True, fancybox=True,ncol=4, borderaxespad=0.)
+		plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), shadow=True, fancybox=True,ncol=4, borderaxespad=0.)
 
 		#plt.legend(loc=2, bbox_to_anchor=[0, 1], ncol=2, shadow=True, title="Legend", fancybox=True)
 		# Add titles
@@ -178,14 +178,17 @@ class Plot():
 			
 			plt.plot(df['x'], df[column], marker='', color=self.getColor(num), linewidth=2, alpha=0.9, label=column)
 			num+=1
+		plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), shadow=True, fancybox=True,ncol=4, borderaxespad=0.)
 
-		plt.legend(loc='bottom center',ncol=3, borderaxespad=0.)
+		#plt.legend(loc='center', bbox_to_anchor=(0.0, -0.9), shadow=True, fancybox=True,ncol=3, borderaxespad=0.)
 		#plt.legend(loc=2, bbox_to_anchor=[0, 1], ncol=2, shadow=True, title="Legend", fancybox=True)
 		# Add titles
 		#plt.title("Trust transitivity cases", loc='left', fontsize=12, fontweight=0, color='black')
-		plt.xlabel("cycles")
+		#plt.xlabel("cycles")
 		plt.ylabel("absolute revenues")
+		plt.title("Cost-Benefit Analysis")
 		#plt.tight_layout()
+	def plotEnd(self):
 		plt.show()
 
 	def getColor(self, num):

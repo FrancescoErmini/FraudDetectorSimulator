@@ -44,89 +44,6 @@ class Result:
 
 
 		self.threshold = 0
-		"""
-
-		self.disguised_behaviour = manager.disguised_behaviour
-		self.malicious_behaviour = manager.malicious_behaviour
-		self.frauds_detector_counter = manager.frauds_detector_counter #conta quante chiamate con frode sono effettivamente valutate a casusa della non risposta del terminator
-		self.frauds_detector_counter_ref = manager.frauds_detector_counter_ref
-		self.accusations_counter_ref = manager.accusations_counter_ref #conta quante accuse dovrebbero essere fatte nel sottoinsieme delle chiamate con frode rilevate
-		self.accusations_counter = manager.accusations_counter #conta quante accuse vengono effettivamente fatte a casua della non risposta degli intermediari
-		
-		self.fraudBehaviour = manager.fraudBehaviour
-		self.accusationsAnalyzed = manager.accusationsAnalyzed
-		self.fraudsAnalyzed = manager.fraudsAnalyzed
-		"""
-	'''
-	def fraudsterClassifier(self, targets, trust_scores):
-
-		avg = np.mean(trust_scores)
-		std = np.std(trust_scores)
-
-		self.threshold = avg - std
-
-		if self.threshold < 0.5:
-			self.threshold = 0.5
-
-		#print("\nClassifying peers into fraudsters and honests using trust scores.")
-		for i in range(len(targets)):
-		
-			if self.scenario.isFraudster(i):
-				self.fraudsters_tot += 1
-		
-				if trust_scores[i] < 0.5:
-					#print("fraudster is: " + str(i+self.scenario.n_providers) + " with score values: " +  str(Tscore[i]) +"<"+str(self.threshold))
-					self.fraudsters += 1
-
-				if trust_scores[i] > 0.5 and trust_scores[i] < TNSLAsettings.trustee_score and trust_scores[i] < self.threshold:
-
-					self.suspected_fraudsters += 1
-
-				if trust_scores[i] > 0.5 and trust_scores[i] < TNSLAsettings.trustee_score and trust_scores[i] > self.threshold:
-					
-					self.suspected_falsenegative += 1
-
-				if trust_scores[i] >= TNSLAsettings.trustee_score:
-
-					self.falsenegative += 1
-
-				if trust_scores[i] == 0.5:
-
-					self.unknown_fraudsters += 1
-			else:
-				self.honests_tot += 1
-				if trust_scores[i] >= TNSLAsettings.trustee_score:
-
-					self.honests += 1
-
-				if trust_scores[i] < TNSLAsettings.trustee_score and trust_scores[i] > 0.5 and trust_scores[i] > self.threshold:
-					
-					self.suspected_honests += 1
-
-				if trust_scores[i] < TNSLAsettings.trustee_score and trust_scores[i] > 0.5 and trust_scores[i] < self.threshold:
-
-					self.suspected_falsepositive += 1
-
-				if trust_scores[i] < 0.5:
-
-					self.falsepositive += 1
-
-				if trust_scores[i] == 0.5:
-
-					self.unknown_honests += 1
-	
-		self.fraudsters_detection = 100.0 * self.fraudsters / self.scenario.n_fraudsters
-		self.fraudsters_detection_suspect =  100.0 * (self.suspected_fraudsters+self.suspected_falsenegative) / self.scenario.n_fraudsters
-		self.fraudsters_detection_error = 100.0 * (self.falsenegative) / self.scenario.n_fraudsters
-		self.fraudsters_detection_missing = 100.0 * self.unknown_fraudsters / self.scenario.n_fraudsters
-		
-		self.honests_detection = 100.0 * self.honests / self.scenario.n_honests
-		self.honests_detection_suspect = 100.0 * (self.suspected_honests+self.suspected_falsepositive) / self.scenario.n_honests
-		self.honests_detection_error  = 100.0 * self.falsepositive / self.scenario.n_honests
-		self.honests_detection_missing = 100.0 * self.unknown_honests / self.scenario.n_honests
-
-	'''
-
 
 	def fraudsterClassifier2(self, target, trust_score):
 		i = target
@@ -173,7 +90,7 @@ class Result:
 			res = True
 		return res
 
-
+	
 
 	def printRes(self):
 

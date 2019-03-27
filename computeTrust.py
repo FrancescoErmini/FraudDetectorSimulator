@@ -171,7 +171,7 @@ def main():
 			
 		result.printRes()
 		revenues[0][c]=scenario.revenue_termin//(scenario.n_providers)
-		revenues[1][c]=scenario.revenue_transit//scenario.n_intermidiaries
+		revenues[1][c]=scenario.revenue_transit//scenario.n_honests
 		revenues[2][c]=scenario.revenue_fraudster//scenario.n_fraudsters
 
 			
@@ -190,7 +190,7 @@ def main():
 	else:
 		#plot.statistics(result=result)
 		plot.trustScore(honests_score_avg,fraudsters_score_avg, result.getFraudBehaviour())
-
+	plot.plotEnd()
 '''
 def saveSetting(self, sim_root):
 	if os.path.isfile(sim_root+'/info/sim_params.csv'):
