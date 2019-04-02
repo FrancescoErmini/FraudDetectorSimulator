@@ -41,6 +41,9 @@ class TrustMan(object):
 		self.fraudsAnalyzed = 0
 
 
+		self.revenue_termin = 0
+		self.revenue_fraudster = 0
+		self.revenue_transit = 0
 
 		'''
 		self.fraudsters = 0
@@ -115,7 +118,7 @@ class TrustMan(object):
 				Tools.printProgress( count, self.scenario.n_calls)
 				count+=1
 
-				self.calcRevenue(trace)
+				self.calcRevenue2(trace)
 
 				#self.measure_fraudsters_behaviour(trace)
 
@@ -370,19 +373,50 @@ class TrustMan(object):
 
 	def calcRevenue(self, trace):
 
-		termination_charges_international_pstn = 0.15 #local tariff 
-		termination_charges_local_pstn = 0.10
-		termination_charges_isp = 0.4 #international from ISPA to ISPB (international)
-		#endogenous_charges = 0.1693
+
+		if self.scenario.isFraud(trace[Csv.FRAUD]):
+
+			self.revenue_termin += TraceConfig.termin_loss*TraceConfig.average_call_duration
+			self.revenue_fraudster += TraceConfig.fraud_gain*TraceConfig.average_call_duration
+			self.revenue_transit += TraceConfig.transit_fee*TraceConfig.average_call_duration
+
+			#else:
+			# se la chiamata non è fraudolenta il terminator guadagna la tariffa piena
+			#self.revenue_termin  += termination_charges_international_pstn*TraceConfig.average_call_duration
+			# se il frodatore si trova nella chiamata onesta, non lo considero nel guadagno dei transit
+			#try:
+			#	if self.scenario.isFraudster(trace[Csv.TRANSIT+(self.scenario.l_chain-2)]):
+			#self.revenue_transit += transit_fee*TraceConfig.average_call_duration*(self.scenario.l_chain)
+			#else:
+			#	self.revenue_transit += transit_fee*TraceConfig.average_call_duration*(self.scenario.l_chain)
+			#except	IndexError:
+			#	self.revenue_transit += transit_fee*TraceConfig.average_call_duration*(self.scenario.l_chain-1)
+
+	def calcRevenue2(self, trace):
 
 
-		if not self.scenario.isFraud(trace[Csv.FRAUD]):
-			self.scenario.revenue_termin  += termination_charges_international_pstn*TraceConfig.average_call_duration
-			self.scenario.revenue_transit +=  termination_charges_isp*TraceConfig.average_call_duration
+		if self.scenario.isFraud(trace[Csv.FRAUD]):
+
+			self.revenue_termin += TraceConfig.local_tariff*TraceConfig.average_call_duration
+			self.revenue_fraudster += (TraceConfig.international_tariff-TraceConfig.local_tariff)*TraceConfig.average_call_duration
+			self.revenue_transit += TraceConfig.transit_fee*(self.scenario.l_chain-1)*TraceConfig.average_call_duration
+
 		else:
-			self.scenario.revenue_termin += termination_charges_local_pstn*TraceConfig.average_call_duration
-			self.scenario.revenue_fraudster += (termination_charges_international_pstn-termination_charges_local_pstn)*TraceConfig.average_call_duration
-			self.scenario.revenue_transit += (termination_charges_isp*TraceConfig.average_call_duration/self.scenario.l_chain)*(self.scenario.l_chain-1)
+			self.revenue_termin += TraceConfig.international_tariff*TraceConfig.average_call_duration
+			self.revenue_transit += TraceConfig.transit_fee*(self.scenario.l_chain)*TraceConfig.average_call_duration
+
+			# se la chiamata non è fraudolenta il terminator guadagna la tariffa piena
+			#self.revenue_termin  += termination_charges_international_pstn*TraceConfig.average_call_duration
+			# se il frodatore si trova nella chiamata onesta, non lo considero nel guadagno dei transit
+			#try:
+			#	if self.scenario.isFraudster(trace[Csv.TRANSIT+(self.scenario.l_chain-2)]):
+			#self.revenue_transit += transit_fee*TraceConfig.average_call_duration*(self.scenario.l_chain)
+			#else:
+			#	self.revenue_transit += transit_fee*TraceConfig.average_call_duration*(self.scenario.l_chain)
+			#except	IndexError:
+			#	self.revenue_transit += transit_fee*TraceConfig.average_call_duration*(self.scenario.l_chain-1)
+
+
 
 
 

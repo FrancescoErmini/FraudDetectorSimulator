@@ -13,29 +13,39 @@ class TraceGenerator:
 
       for i in range(0, self.scenario.n_calls):
          Tools.printProgress( i, self.scenario.n_calls)
-
+         '''
          durationA = TraceConfig.average_call_duration #random.randint(TraceConfig.duration_min,TraceConfig.duration_max)#minuti
          durationB = durationA
          rateA = TraceConfig.tariff_international #euro local termination tarif iva inclusa
          rateB = rateA
+         '''
          fraud = 0 #FALSE
+
 
          if not self.isFraud(i):    
             endPoints = self.generateEndPoints(fraud=False)
             #popolo il vettore degli intermediari
             nodes = self.generateNodesChain(fraud=False)
+            fraud = 0 #FALSE
          else: #tracce con frode
             endPoints = self.generateEndPoints(fraud=True)
             nodes = self.generateNodesChain(fraud=True)
-
             fraud = 1
+
+            if not nodes:
+               endPoints = self.generateEndPoints(fraud=False)
+               #popolo il vettore degli intermediari
+               nodes = self.generateNodesChain(fraud=False)  
+               fraud = 0            
+
+         '''  
             if TraceConfig.fas_fraud:
                durationA = durationA + (1/60.0)*TraceConfig.fas_duration
             if TraceConfig.bypass_fraud:
                rateB = TraceConfig.tariff_local
             if TraceConfig.lrn_fraud:
                rateA = TraceConfig.tariff_local  #.uniform(TraceConfig.rate_inter_min , TraceConfig.rate_inter_max)
-         
+         '''
          """
          Note: element order shold match above values in config.py
          class Csv:
@@ -45,6 +55,9 @@ class TraceGenerator:
             TERMIN = 3
             TRANSIT = 4+i
          """
+         #if fraud==1 and not self.scenario.isFraudster(nodes[len(nodes)-1]):
+            #print("-")
+         #   pass
 
          trace = str(i)
          trace += ',' + str(fraud)
@@ -54,11 +67,8 @@ class TraceGenerator:
             trace = trace + ',' + str(node)
 
          #punto1 - evito di scrivere le tracce con frodatore in blacklist
-         if fraud==1 and not self.scenario.isFraudster(nodes[len(nodes)-1]):
-            #print("-")
-            pass
-         else:
-            f.write(trace+'\n')
+
+         f.write(trace+'\n')
       #endfor
       f.close()
 
@@ -156,11 +166,13 @@ class TraceGenerator:
          lastnode = random.randint(self.scenario.n_providers+self.scenario.n_intermidiaries - self.scenario.n_fraudsters, self.scenario.n_providers + self.scenario.n_intermidiaries -1)
          if not self.isBlackListed(lastnode):
             nodes.append(lastnode)
+         else:
+            nodes = []
             #attenzione, controsenso la traccia è con frode, senza frodatore: risolta alla cazzo vedi punto1
       return nodes
 
    def isBlackListed(self, node):
-      if not TrustConfig.use_tmp_blacklist:
+      if not self.scenario.use_blacklist:
          return False
       else:
          if node in self.scenario.blacklist:

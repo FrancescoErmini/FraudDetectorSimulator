@@ -2,7 +2,7 @@
 class Scenario:
 
 
-   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation, cycles):
+   def __init__(self, n_providers, n_intermidiaries, n_calls,  l_chain, fraudsters_percentage,  frauds_percentage, provider_participation, intermidiaries_participation, cycles, blacklist):
       super(Scenario, self).__init__()
       self.n_providers = n_providers
       self.n_intermidiaries = n_intermidiaries 
@@ -24,6 +24,7 @@ class Scenario:
       self.revenue_termin = 0
       self.revenue_transit = 0
       self.revenue_fraudster = 0 
+      self.use_blacklist = blacklist
       
 
 
@@ -99,11 +100,22 @@ class Scenario:
       else:
          return False
 
+   def is_blacklisted(self, index):
+      if index in self.blacklist:
+         return True
+      else:
+         return False
+   def pull_from_blacklist(self, index):
+      self.blacklist.remove(index)
+
    def push_in_blacklist(self, index):
       #avoid put index twice
       if index not in self.blacklist:
 
          self.blacklist.append(index)
+
+   def dump_blacklist(self):
+      return self.blacklist
 
    def fullfill_blacklist(self):
       low = self.n_providers+self.n_intermidiaries-self.n_fraudsters

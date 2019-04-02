@@ -8,39 +8,23 @@ class TraceConfig:
 	#wholesale_providers = 4000 #1000 #somma di provider e intermediari deve essere multiplo di cluster size
 	#providers_per_call = 4
 	
-	terminating_traffic = 180000000
-	min_per_day = 60*24
-	average_call_duration = 6 #Average call duration
-	n_calls_per_min = 167 #240
+	simBoxTraffic = 18000 #minuti al giorno, 60 sim con 5 ore di funzionamento cadauna ala giorno
+	average_call_duration = 6 #Average call duratio	
 
 
 	international_tariff = 0.15
-	transit_fee = 1
-	local_tariff = 0.10
+	local_tariff = 0.05
+
+	transit_fee = 0.01
+	min_fraudster_tariff = 0.03
+
+	fraud_gain = 0.06
+	fraud_gain_min = 0.03
+	termin_loss = 0.15
+
 	#fraudsters_providers_percentage = 1 #5%degli intermediari
 	#fraud_traffic_percentage = 
 	
-
-	#da rimuovere: solo 3 è concessa.
-	#fraudsters_response_strategy = 3 # 1=not_responding 2=hijack_suspects 3=honesty_spoof
-
-	bypass_fraud = True
-	fas_fraud = False
-	lrn_fraud = False
-	tariff_local = 0.02	
-	tariff_international = 0.2
-	bypass_revenue = 0.1 #guadagno al minuti stimato per bypass fraud
-	lrn_revenue = 0.05
-	fas_duration = 10 #secondi
-
-	n_cluster_size = 1
-
-
-
-
-	def cycles2days(call_per_cycle):
-		return call_per_cycle*TraceConfig.n_calls_per_min/(24*60)
-
 
 	
 
@@ -50,7 +34,7 @@ class TrustConfig:
 	pretrust_strategy = False
 	simmetry_strategy = True
 	l_cascade_agreements = 1 # minore di l_chain 1,2,3
-	use_tmp_blacklist = True
+	#use_tmp_blacklist = False
 	#clustering_strategy = 1
 
 class TNSLAsettings:

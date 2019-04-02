@@ -43,6 +43,7 @@ class Result:
 		self.honests_detection_missing = 0
 
 
+
 		self.threshold = 0
 
 	def fraudsterClassifier2(self, target, trust_score):
@@ -90,7 +91,20 @@ class Result:
 			res = True
 		return res
 
-	
+	def calcDelay(self):
+		frauds_rate = TraceConfig.simBoxTraffic/TraceConfig.average_call_duration
+		frauds_rate_tot = frauds_rate * self.scenario.n_fraudsters
+		call_rate = frauds_rate_tot * 100 / self.scenario.frauds_percentage
+		days = self.scenario.n_calls / call_rate #days
+		return days
+
+	def calcThreshold(self, days):
+		
+		return TraceConfig.simBoxTraffic*TraceConfig.min_fraudster_tariff*days
+		
+
+
+
 
 	def printRes(self):
 
